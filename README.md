@@ -20,7 +20,7 @@ The bundle is designed for learning from lecture notes, slides, handwritten note
 Install all four folders together: their documentation uses relative links to the shared planning skill.
 
 ```bash
-git clone https://github.com/<your-account>/course-study-skills.git
+git clone https://github.com/tony-creat06/course-study-skills.git
 cd course-study-skills
 cp -R skills/study-planner skills/course-study skills/exam-analysis skills/practice-builder ~/.codex/skills/
 ```
