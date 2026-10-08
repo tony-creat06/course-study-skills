@@ -1,0 +1,4 @@
+interface:
+  display_name: "私人学习规划"
+  short_description: "主动组织课程学习、课后练习与考试复习，维护一套可追踪计划。"
+  default_prompt: "请用 $study-planner 根据课程记录继续学习，并读取新增临时答疑记录。"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "考试分析"
+  short_description: "依据现行课程与历年试卷分析考查能力、题型、覆盖和分值。"
+  default_prompt: "请用 $exam-analysis 分析我提供的课程要求和试卷，保留原题来源与统计口径。"

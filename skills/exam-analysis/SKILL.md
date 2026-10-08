@@ -1,0 +1,32 @@
+---
+name: exam-analysis
+description: Analyze provided past papers, marking schemes, and current course requirements into traceable exam coverage, question styles, and topic statistics. Use to establish or refresh exam evidence for teaching and practice; do not create the student's study schedule.
+---
+
+# 考试要求与历年卷分析
+
+产出教师、规划和出题可共用的考试依据，保留来源、统计口径和适用边界。先核对现行课程要求，再分析真实题目；不能把过去频率当作下一次概率。
+
+## 核验范围与资料
+
+沿用已知课程身份、适用学年、考核形式与范围。缺少的关键信息从材料核对；确实无法判断才问一个问题。封面日期、适用学年和文件名分别记录。老师revision、公式表、习题与评分说明用于补充要求；mock、练习卷和正式真题分别标注。
+
+持续课程读 `course.md`、`materials.md`和已有 `exam/`分析，只重读变化或当前需要的原始页。写入共享课程时遵循[共同记录约定](../study-planner/references/coordination.md)，输出进入 `exam/`；不修改计划、课堂进度或学生掌握记录。
+
+## 理解实际考查
+
+按年查看题目，核对题号/小问、题干条件、公式图示和分值；文字抽取不足时看原页。登记范围与全文已审阅分别说明，不以解析成功或文件名证明内容已读。公式、版本疑点或重要原页不可读时用[共同核对规则](../course-study/references/source-checks.md)，不根据乱码替原题修出一个未经确认的版本。
+
+分类依据真实题意并对应课程术语：知识点、考查能力、命令动词、推理/计算链、题型、给定公式/数据、工具、时间与必答/选答结构。跨主题可多标签，保留大题上下文和小问依赖。答案/评分说明有助核对考查要求；缺失时参考评分点明确为推定。
+
+最近两三年真题是风格最高优先参考，老师习题提供课程重点，更早真题作次要参考。核对现行范围变化，不用近期未出现排除必学内容。资料很少时说明证据范围，不编造趋势或概率。
+
+## 统计与可复用输出
+
+读[分析数据与统计](references/analysis.md)，保存一份结构化题目记录和简明 `exam/profile.md`：当前要求、历史题型/能力、近年与旧卷区别、来源位置、缺口和适用版本。
+
+沿用按大题主要主题去重的宏观分布；另保留知识点覆盖与小问分值。覆盖可重叠，分值不重复分配；同一小问联合考点没有评分细分时保留联合分值。说明统计单位、分母、已分析范围、未分类/未知分值和选答影响。
+
+`scripts/summarize_exam.py`只对已经理解并标注的JSON计数，不读取PDF、不自动判断题意。运行后核对来源题数/分值与汇总，保留未分类项，不能只看总计100%。
+
+输出向规划提供证据与建议重点，向题目模块提供原题锚点和题型要求。没有新的资料或范围变化时复用已有有效分析，不每课重做。

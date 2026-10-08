@@ -1,0 +1,4 @@
+interface:
+  display_name: "课程教师"
+  short_description: "连贯讲解课程知识、补足基础，并处理临时概念和题目答疑。"
+  default_prompt: "请用 $course-study 讲解当前课程主题，保持推理连贯并保存实际课堂记录。"
