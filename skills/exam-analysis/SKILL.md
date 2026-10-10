@@ -30,3 +30,5 @@ description: Analyze provided past papers, marking schemes, and current course r
 `scripts/summarize_exam.py`只对已经理解并标注的JSON计数，不读取PDF、不自动判断题意。运行后核对来源题数/分值与汇总，保留未分类项，不能只看总计100%。
 
 输出向规划提供证据与建议重点，向题目模块提供原题锚点和题型要求。没有新的资料或范围变化时复用已有有效分析，不每课重做。
+
+供教学/出题复用时，在 `exam/profile.md` 保留少量有代表性的能力链与题设边界：来源小问、需要选择/解释/推导什么、前后依赖及允许使用的结果。它们是原卷要求的例证，频次汇总不能替代这些信息。已有分析已包含时直接沿用。

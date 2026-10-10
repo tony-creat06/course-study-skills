@@ -49,7 +49,23 @@ The skills treat learner-provided materials as the primary source. Recent two to
 
 This repository contains only the reusable skill instructions and their small standard-library Python helpers. It does not contain lecture notes, past papers, answers, personal progress, student work, or other course materials.
 
-This is version 0.2.2. It was structurally checked and exercised in a bounded simulated workflow. It has not yet had broad human classroom validation, so use it as a study aid and verify important course-specific content against your teaching materials.
+This is version 0.2.3. It separates practice assistance from outcome in HTML reviews, checks common mathematical Markdown mistakes, and makes local teaching repair and later review tasks more specific. Legacy review inputs remain readable. The four responsibilities and normal final course depth are preserved.
+
+Helper regressions and bounded simulated use check software and workflow behavior. They do not establish superior learning, long-term retention, or exam results compared with direct-file tutoring. Important course-specific content still needs checking against the teaching materials.
+
+## Development checks
+
+Run `python3 -B -m unittest discover -s tests -v` for helper regressions. Mathematical note checks are read-only:
+
+```bash
+python3 skills/course-study/scripts/check_math.py <saved-lesson.md>
+```
+
+The text checker flags common delimiter, brace, and command-escaping mistakes. It does not render formulas or verify their meaning; inspect warnings in context. Test data in this repository is synthetic and contains no learner records or course PDFs.
+
+## Design references
+
+The workflow adapts specific ideas from [Revision Tutor](https://github.com/yangcodingmaster/Revision-Tutor/blob/main/SKILL.en.md) (local reasoning gaps), [OpenTutor](https://github.com/LEARNableLabs/opentutor/blob/main/docs/methodology.md) (concrete revisit and variation tasks), and [DeepTutor](https://arxiv.org/html/2604.26962v3) (source grounding and separate tutoring/practice evaluation). These inform the design; their reported evaluations do not validate this bundle. Coherent lectures, optional in-class checks, and most practice after class remain the defaults.
 
 ## License
 

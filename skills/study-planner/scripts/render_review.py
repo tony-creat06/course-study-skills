@@ -13,7 +13,11 @@ from urllib.parse import urlsplit
 import xml.etree.ElementTree as ET
 
 ATTEMPTS = {'independent_correct': '独立完成且正确', 'independent_incorrect': '独立尝试后需订正',
-            'hinted': '使用提示后完成', 'partial': '部分完成', 'shown_solution': '已查看完整解析'}
+            'hinted': '本题使用过提示（结果见复盘）', 'partial': '部分完成', 'shown_solution': '已查看完整解析'}
+ASSISTANCE = {'none': '本次未获关键提示', 'hint': '本次使用提示',
+              'solution': '本次已展示解析', 'mixed': '各小问帮助条件不同', 'unknown': '帮助条件未知'}
+OUTCOMES = {'correct': '正确完成', 'incorrect': '作答有误', 'partial': '部分完成',
+            'not_attempted': '未独立尝试', 'mixed': '各小问结果不同'}
 HTML_TAGS = {'p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'b', 'i', 'h3', 'h4',
              'table', 'thead', 'tbody', 'tr', 'td', 'th', 'code', 'pre', 'blockquote', 'span', 'div', 'img', 'a'}
 MATH_TAGS = {'math', 'mrow', 'mi', 'mn', 'mo', 'mfrac', 'msup', 'msub', 'msubsup', 'msqrt', 'mroot',
@@ -25,6 +29,40 @@ HTML_ATTRS = {'img': {'src', 'alt', 'width', 'height'}, 'a': {'href', 'title'},
               'td': {'colspan', 'rowspan'}, 'th': {'colspan', 'rowspan', 'scope'}}
 VOID = {'br', 'img'}
 RAW_TEX = re.compile(r'\\(?:frac|sqrt|begin|end|partial|hbar|psi|lambda|alpha|beta|left|right)\b|\\[()\[\]]|\$[^$\n]+\$')
+
+
+def evidence_label(item):
+    """Display observed help and outcome separately; keep old records readable."""
+    if 'evidence' not in item:
+        if item.get('attempt') not in ATTEMPTS:
+            raise ValueError('Do not include future/unattempted questions')
+        return ATTEMPTS[item['attempt']]
+    if 'attempt' in item:
+        raise ValueError('Use evidence or legacy attempt, not both')
+    evidence = item['evidence']
+    fields = {'assistance', 'outcome', 'reproduction', 'delayed'}
+    if not isinstance(evidence, dict) or set(evidence) - fields:
+        raise ValueError('Unsupported evidence fields')
+    help_used, outcome = evidence.get('assistance'), evidence.get('outcome')
+    if not isinstance(help_used, str) or help_used not in ASSISTANCE:
+        raise ValueError('Evidence requires an observed assistance condition')
+    if not isinstance(outcome, str) or outcome not in OUTCOMES:
+        raise ValueError('Evidence requires an observed outcome')
+    for key in ('reproduction', 'delayed'):
+        if evidence.get(key) is not None and not isinstance(evidence[key], bool):
+            raise ValueError(key + ' must be true, false, or null')
+    if outcome == 'not_attempted' and help_used not in {'solution', 'mixed'}:
+        raise ValueError('Do not include future/unattempted questions without a shown solution')
+    if outcome == 'not_attempted' and evidence.get('reproduction'):
+        raise ValueError('Reproduction requires an actual attempt')
+    if (help_used == 'mixed' or outcome == 'mixed') and not item.get('personal_review', '').strip():
+        raise ValueError('Mixed evidence requires per-part conditions in personal_review')
+    labels = [OUTCOMES[outcome], ASSISTANCE[help_used]]
+    if evidence.get('reproduction'):
+        labels.append('已见解法后的再现')
+    if evidence.get('delayed'):
+        labels.append('隔时回访')
+    return ' · '.join(labels)
 
 
 def image_data(value, base):
@@ -147,12 +185,11 @@ def render(data, base):
         if item['id'] in seen:
             raise ValueError('Duplicate question id')
         seen.add(item['id'])
-        if item.get('attempt') not in ATTEMPTS:
-            raise ValueError('Do not include future/unattempted questions')
+        label = evidence_label(item)
         question = render_fragment(item.get('question_html'), base)
         solution = render_fragment(item.get('solution_html'), base)
         personal = item['personal_review'].strip()
-        card = '<article><h2>' + escape(item['title']) + '</h2><span class="badge">' + ATTEMPTS[item['attempt']] + '</span>'
+        card = '<article><h2>' + escape(item['title']) + '</h2><span class="badge">' + escape(label) + '</span>'
         card += '<p class="source">来源：' + escape(item['source']) + '</p><section><h3>完整题目</h3>' + question + '</section>'
         card += '<section class="solution"><h3>完整解析</h3>' + solution + '</section>'
         if personal:
