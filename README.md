@@ -49,7 +49,7 @@ The skills treat learner-provided materials as the primary source. Recent two to
 
 This repository contains only the reusable skill instructions and their small standard-library Python helpers. It does not contain lecture notes, past papers, answers, personal progress, student work, or other course materials.
 
-This is version 0.2.5. It adds scoped preference updates: temporary requests, continuing user preferences, tentative observations, and learning outcomes are recorded separately. The main planner maintains personal records; teaching adapts within the current request and course requirements. A single reaction does not establish a permanent learning style. It retains the v0.2.4 feedback, practice and resume guidance, plus the mathematical text checks and separate assistance/outcome review fields. Legacy review inputs remain readable. The four responsibilities and normal final course depth are preserved.
+This is version 0.2.6. It adds a personal teaching-experience loop: reuse relevant strategies, record concrete feedback and problems, apply a small adjustment, and retain, revise or retire it from later observations. The shared skills provide this mechanism; each learner's strategies stay in their own records. Without new evidence, existing strategies can remain unchanged; each run is not guaranteed to improve learning. It retains the scoped preference, feedback, practice and resume guidance, plus the mathematical text checks and separate assistance/outcome review fields. Legacy review inputs remain readable. The four responsibilities and normal final course depth are preserved.
 
 Personalization uses local course records, not automatic rewriting of the shared skill source. Preferences can change or be withdrawn. Cross-course reuse requires the same learner and explicitly general preferences from designated records; personal records are not published with this bundle.
 
@@ -72,6 +72,8 @@ The workflow adapts specific ideas from [Revision Tutor](https://github.com/yang
 The [IES study guide](https://ies.ed.gov/ncee/wwc/practiceguide/1) informs the combination of worked examples and problem solving. [Carnegie Mellon's learning principles](https://www.cmu.edu/teaching/principles/learning.html) inform targeted feedback and practice that integrates skills and requires choosing when to apply them. These are design grounds, not evidence that this bundle improves an individual student's outcomes.
 
 The [learning-styles evidence review](https://journals.sagepub.com/doi/10.1111/j.1539-6053.2009.01038.x) informs the distinction between expressed presentation preferences and evidence that a matching teaching method improves learning. Preference updates do not assign fixed learner types or establish effectiveness by themselves.
+
+[ACE](https://github.com/ace-agent/ace) informs incremental experience accumulation, [Reflexion](https://github.com/noahshinn/reflexion) informs concrete failure feedback for a later attempt, and [GEPA](https://github.com/gepa-ai/gepa) informs checking proposed changes and retaining earlier strengths. These ideas are adapted into local learner records; their frameworks are not dependencies and their evaluations do not establish teaching gains here.
 
 ## License
 
