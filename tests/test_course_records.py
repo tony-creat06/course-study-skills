@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch
 
@@ -27,7 +28,12 @@ class RecordTests(unittest.TestCase):
                 {'path': 'practice/p1.md', 'expected': 'absent', 'content': 'Synthetic attempt P1'},
                 {'path': 'study-plan.md', 'expected': 'absent', 'content': 'Next: P2'}]
 
-    def crash(self):
+    def exam_updates(self, revision=1):
+        return [{'path': 'exam/items.json', 'expected': 'absent', 'content': json.dumps({'revision': revision, 'marks': 12})},
+                {'path': 'exam/summary.json', 'expected': 'absent', 'content': json.dumps({'revision': revision, 'known_marks': 12})},
+                {'path': 'exam/profile.md', 'expected': 'absent', 'content': 'Revision ' + str(revision)}]
+
+    def crash(self, role='main', updates=None, stop='p1.md'):
         # Real process exit after the first public record, before the checkpoint.
         code = """
 import importlib.util, json, os
@@ -37,11 +43,13 @@ records = importlib.util.module_from_spec(spec); spec.loader.exec_module(records
 original = records.atomic_write
 def interrupted(target, data):
     original(target, data)
-    if target.name == 'p1.md': os._exit(77)
+    if target.name == STOP: os._exit(77)
 records.atomic_write = interrupted
-records.write_bundle(ROOT, 'main', UPDATES)
+records.write_bundle(ROOT, ROLE, UPDATES)
 """
-        code = 'SCRIPT=' + repr(str(SCRIPT)) + '\nROOT=' + repr(str(self.root)) + '\nUPDATES=' + repr(self.updates()) + '\n' + code
+        code = ('SCRIPT=' + repr(str(SCRIPT)) + '\nROOT=' + repr(str(self.root)) +
+                '\nUPDATES=' + repr(self.updates() if updates is None else updates) +
+                '\nROLE=' + repr(role) + '\nSTOP=' + repr(stop) + '\n' + code)
         result = subprocess.run([sys.executable, '-B', '-c', code], capture_output=True, text=True)
         self.assertEqual(result.returncode, 77, result.stderr)
         self.assertTrue((self.root / records.PENDING).exists())
@@ -96,9 +104,97 @@ records.write_bundle(ROOT, 'main', UPDATES)
                         [{'path': 'exam/r.md', 'expected': 'absent', 'content': 'x'}]):
             with self.subTest(updates=updates), self.assertRaises(ValueError):
                 records.write_bundle(self.root, 'main', updates)
-        for role in ('aside', 'analyst', 'questions'):
+        for role in ('aside', 'questions'):
             with self.assertRaisesRegex(ValueError, 'Only main'):
                 records.write_bundle(self.root, role, self.updates())
+
+    def test_analyst_batch_and_role_preflight(self):
+        with self.assertRaisesRegex(ValueError, 'Role cannot'):
+            records.write_bundle(self.root, 'analyst', self.exam_updates() + self.updates())
+        self.assertFalse(self.root.exists())
+        records.write_bundle(self.root, 'analyst', self.exam_updates())
+        result = records.read_records(self.root, [e['path'] for e in self.exam_updates()])
+        self.assertEqual([r['content'] for r in result['records']], [e['content'] for e in self.exam_updates()])
+        self.assertFalse((self.root / 'current.md').exists())
+
+    def test_interrupted_analyst_batch_blocks_snapshot_and_allows_owner_or_main_recovery(self):
+        for owner in ('analyst', 'main'):
+            with self.subTest(owner=owner):
+                self.root = self.root / owner
+                self.crash('analyst', self.exam_updates(), 'items.json')
+                with self.assertRaisesRegex(ValueError, 'Incomplete'):
+                    records.read_records(self.root, ['exam/items.json', 'exam/profile.md'])
+                records.recover_bundle(self.root, owner)
+                self.assertEqual([r['content'] for r in records.read_records(self.root, [e['path'] for e in self.exam_updates()])['records']],
+                                 [e['content'] for e in self.exam_updates()])
+
+    def test_analyst_cannot_recover_main_and_legacy_journal_remains_recoverable(self):
+        self.crash()
+        with self.assertRaisesRegex(ValueError, 'cannot recover'):
+            records.recover_bundle(self.root, 'analyst')
+        path = self.root / records.PENDING
+        journal = json.loads(path.read_text())
+        journal.pop('role')
+        journal['version'] = 1
+        path.write_text(json.dumps(journal))
+        records.recover_bundle(self.root, 'main')
+        self.assertEqual(records.read_record(self.root, 'current.md')['content'], self.updates()[0]['content'])
+
+    def test_snapshot_waits_for_whole_analyst_batch(self):
+        records.write_bundle(self.root, 'analyst', self.exam_updates())
+        paths = [e['path'] for e in self.exam_updates()]
+        old = records.read_records(self.root, paths)['records']
+        updates = [dict(e, expected=r['sha256']) for e, r in zip(self.exam_updates(2), old)]
+        entered, release = threading.Event(), threading.Event()
+        original = records.atomic_write
+        def paused(target, data):
+            original(target, data)
+            if target == self.root.resolve() / 'exam/items.json':
+                entered.set()
+                if not release.wait(5):
+                    raise OSError('Test writer was not released')
+        with ThreadPoolExecutor(max_workers=2) as workers, patch.object(records, 'atomic_write', paused):
+            writer = workers.submit(records.write_bundle, self.root, 'analyst', updates)
+            try:
+                self.assertTrue(entered.wait(5))
+                with self.assertRaisesRegex(ValueError, 'busy'):
+                    records.read_records(self.root, paths, lock_timeout=0)
+                reader = workers.submit(records.read_records, self.root, paths)
+            finally:
+                release.set()
+            writer.result()
+            self.assertEqual([r['content'] for r in reader.result()['records']], [e['content'] for e in updates])
+
+    def test_analyst_stale_batch_and_manual_edit_abort(self):
+        records.write_bundle(self.root, 'analyst', self.exam_updates())
+        paths = [e['path'] for e in self.exam_updates()]
+        old = records.read_records(self.root, paths)['records']
+        updates = [dict(e, expected=r['sha256']) for e, r in zip(self.exam_updates(2), old)]
+        stale = [dict(e) for e in updates]
+        stale[-1]['expected'] = '0' * 64
+        with self.assertRaisesRegex(ValueError, 'Stale bundle'):
+            records.write_bundle(self.root, 'analyst', stale)
+        self.assertEqual(records.read_records(self.root, paths)['records'], old)
+        self.crash('analyst', updates, 'items.json')
+        (self.root / 'exam/items.json').write_text('{"manual": true}')
+        with self.assertRaisesRegex(ValueError, 'manual edit'):
+            records.recover_bundle(self.root, 'analyst')
+        result = records.recover_bundle(self.root, 'analyst', 'abort')
+        self.assertEqual(result['preserved_manual_edits'], ['exam/items.json'])
+        self.assertEqual(records.read_record(self.root, 'exam/summary.json'), old[1])
+        self.assertEqual(records.read_record(self.root, 'exam/profile.md'), old[2])
+
+    def test_read_set_cli_missing_root_and_duplicate_paths(self):
+        with self.assertRaisesRegex(ValueError, 'already exist'):
+            records.read_records(self.root, ['current.md'])
+        self.assertFalse(self.root.exists())
+        self.root.mkdir()
+        with self.assertRaisesRegex(ValueError, 'Duplicate'):
+            records.read_records(self.root, ['exam/a.md', 'exam/./a.md'])
+        result = subprocess.run([sys.executable, '-B', str(SCRIPT), 'read-set', '--root', str(self.root),
+                                 '--paths', 'exam/items.json', 'exam/profile.md'], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual([r['sha256'] for r in json.loads(result.stdout)['records']], ['absent', 'absent'])
 
     def test_bundle_success_and_noop_keep_record_mtimes(self):
         self.assertTrue(records.write_bundle(self.root, 'main', self.updates())['changed'])
@@ -175,6 +271,9 @@ class ReadOnlyPlatformTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'macOS/Linux'):
                 records.write_record(root, 'current.md', 'main', 'absent', 'x')
             self.assertFalse(root.exists())
+            root.mkdir()
+            with self.assertRaisesRegex(ValueError, 'macOS/Linux'):
+                records.read_records(root, ['current.md'])
 
 
 if __name__ == '__main__':

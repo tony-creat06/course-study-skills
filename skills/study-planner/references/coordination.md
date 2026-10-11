@@ -46,6 +46,15 @@ python3 <study-planner>/scripts/course_records.py note --root <课程目录> --r
 
 写入范围按角色和目录限定：main维护共同Markdown、lessons/practice的Markdown及reviews的JSON/HTML；analyst维护exam的Markdown/JSON；questions维护questions的Markdown/JSON；aside仅新增side-notes的Markdown。JSON写入先检查语法；语义与证据仍由模块核对。共享JSON也先read再write。汇总/HTML脚本写课程输出时使用--root/--path/--expected模式，从而保留同样版本保护；--output用于课程外临时预览，不是共享记录覆盖的捷径。
 
+多个文件共同描述一份考试分析时，先用 `read-set` 一次取得相关原题记录、profile和统计的内容/SHA，分析模块在课程外准备新正文及统计，再以 `bundle --role analyst` 整批提交到exam。不能逐个write这些关联结果后称整份分析已发布。规划采用时、教师或题目模块自行读取当前考试依据时，同样用read-set读取本次需要的关联文件；规划已传递完整快照内容与SHA时可直接复用。未建立的文件会返回absent；缺失资料仍需补齐或明确范围，不因取得快照而变为完整分析。
+
+```text
+python3 <study-planner>/scripts/course_records.py read-set --root <课程目录> --paths exam/items.json exam/profile.md exam/summary.json
+python3 <study-planner>/scripts/course_records.py bundle --root <课程目录> --role analyst --body-file <关联分析更新.json>
+```
+
+文件名按已有实际记录选取，不批量迁移旧路径。read-set要求已有课程根目录，读取期间持有与写入相同的锁，返回每个文件的内容和SHA；协作写入不能插入其中。遇到锁超时保留当前课堂接续点、稍后重试；遇到未完成批次先恢复。普通read只读取一个文件，不能用先后几个read冒充同一快照。锁不会核验题意或阻止绕开助手的编辑，采用前仍检查关联结果的范围与内容。
+
 临时内容在side-notes；主课堂笔记用role main和kind lesson/practice。根目录及角色每次与当前课程核对。工具不可用时可顺序保存独立笔记，但共享计划的覆盖必须保留写前回读和备份；两个活跃对话无法保证写入安全时先保留独立条目，不称已同步。
 
 写后回读。保留用户手改内容；更正说明依据，原资料只读。成功保存才报告已保存，失败时提供可复制的接续摘要。讲过、看过答案、提示后成功、独立成功与隔时保持分别记录；不保存内部思维过程或没有发生的错误。
@@ -57,8 +66,8 @@ python3 <study-planner>/scripts/course_records.py bundle --root <课程目录> -
 python3 <study-planner>/scripts/course_records.py recover --root <课程目录> --role main
 ```
 
-批量提交是可恢复的顺序写入，并非所有文件同时原子替换。隐藏 `.course-records.pending.json` 保留中断恢复信息；存在时脚本拒绝普通read/write，main先recover，再回读相关笔记、计划和检查点，从实际记录接续，不能重发已保存的练习或补造学生回答。默认恢复完成该批更新；若检测到手改则保留手改、停止覆盖并报出冲突。需要取消未完成批次时main可用 `recover --decision abort`：只回退仍匹配该批旧/新版本的文件，保留其他手改并报告路径，取消内容留 `.history/`；随后回读合并、重新核对课堂断点再提交。中断中的批次应先恢复/取消，再回退Skill版本；不能直接删journal绕过检查。
+批量提交是可恢复的顺序写入，并非所有文件同时原子替换。隐藏 `.course-records.pending.json` 保留中断恢复信息；存在时脚本拒绝read、read-set和普通写入。main可恢复两种批次，analyst只可用 `recover --role analyst` 恢复自己的分析批次，不能恢复或改写main的批次；aside/questions均不能恢复。恢复后回读相关记录，从实际位置接续，不能重发已保存的练习或补造学生回答。默认恢复完成该批更新；若检测到手改则保留手改、停止覆盖并报出冲突。需要取消未完成批次时有资格的角色可用 `recover --decision abort`：只回退仍匹配该批旧/新版本的文件，保留其他手改并报告路径，取消内容留 `.history/`；随后回读合并、重新核对断点再提交。新助手也能恢复旧版v1主线journal；中断中的批次应先恢复/取消，再回退Skill版本，旧助手不能恢复新增的v2journal。不能直接删journal绕过检查。
 
-写入助手支持macOS/Linux的POSIX锁；Windows写入尚不支持，读取普通旧记录不要求锁库。工具不可用时仍保留独立笔记/可复制摘要，不能宣称已经安全同步。课程文件旧格式沿用，不需要批量迁移。
+写入及read-set支持macOS/Linux的POSIX锁；Windows共享写入/快照尚不支持，读取普通旧记录不要求锁库。工具不可用时仍保留独立笔记/可复制摘要，不能宣称已经安全同步。课程文件旧格式沿用，不需要批量迁移。
 
 协作锁、批次journal和旧版本备份保存在课程根目录的隐藏`.course-records.lock`、`.course-records.pending.json`与`.history/`中，属于恢复元数据，不是另一份课堂笔记。不擅自改Obsidian设置或删备份；用户要求调整备份存放时再选择位置。它们保护通过脚本的写入，外部编辑器不会自动遵守锁，手改仍需写前回读；不声称断电持久性、跨设备同步或任意外部编辑期间的多文件快照一致性。

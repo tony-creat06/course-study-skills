@@ -32,7 +32,7 @@ def journal_path(root):
 
 def check_pending(root):
     if journal_path(root).exists():
-        raise ValueError('Incomplete record bundle; main must run recover before reading or writing shared records')
+        raise ValueError('Incomplete record bundle; main or its analyst owner must run recover before reading or writing shared records')
 
 
 def target_path(root, relative):
@@ -64,6 +64,28 @@ def read_record(root, relative):
             'content': None if data is None else data.decode('utf-8')}
 
 
+def read_records(root, relatives, lock_timeout=2.0):
+    """Read related files while holding the same lock as cooperating writers."""
+    root = Path(root).resolve()
+    if not root.is_dir():
+        raise ValueError('Record root must already exist for read-set')
+    if not isinstance(relatives, list) or not relatives or any(not isinstance(p, str) for p in relatives):
+        raise ValueError('Read-set requires a nonempty list of record paths')
+    paths = [str(target_path(root, p)[1].relative_to(root)) for p in relatives]
+    if len(set(paths)) != len(paths):
+        raise ValueError('Duplicate read-set record path')
+    with course_lock(root, lock_timeout):
+        check_pending(root)
+        result = []
+        for relative in paths:
+            _, target = target_path(root, relative)
+            data = target.read_bytes() if target.exists() else None
+            result.append({'path': relative, 'sha256': digest(data),
+                           'content': None if data is None else data.decode('utf-8')})
+        check_pending(root)
+        return {'records': result}
+
+
 def check_role(role, relative):
     rel = Path(relative)
     if role not in ROLE_FORMATS:
@@ -81,7 +103,7 @@ def course_lock(root, timeout=2.0):
     if not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or not 0 <= timeout <= 30:
         raise ValueError('Lock timeout must be between 0 and 30 seconds')
     if fcntl is None:
-        raise ValueError('Record writing requires POSIX flock (macOS/Linux); Windows writing is not supported')
+        raise ValueError('Record writing and read-set require POSIX flock (macOS/Linux); Windows coordination is not supported')
     root.mkdir(parents=True, exist_ok=True)
     flags = os.O_CREAT | os.O_RDWR | getattr(os, 'O_NOFOLLOW', 0)
     fd = os.open(root / '.course-records.lock', flags, 0o600)
@@ -152,7 +174,7 @@ def write_record(root, relative, role, expected, content, lock_timeout=2.0):
                 'backup': backup}
 
 
-def bundle_entries(root, updates):
+def bundle_entries(root, updates, role='main'):
     if not isinstance(updates, list) or not updates:
         raise ValueError('Bundle requires a nonempty updates list')
     entries, seen = [], set()
@@ -162,7 +184,7 @@ def bundle_entries(root, updates):
         relative, expected, content = update['path'], update['expected'], update['content']
         if not all(isinstance(value, str) for value in (relative, expected, content)):
             raise ValueError('Bundle fields must be strings')
-        check_role('main', relative)
+        check_role(role, relative)
         _, target = target_path(root, relative)
         canonical = str(target.relative_to(root))
         if canonical in seen:
@@ -215,10 +237,10 @@ def apply_journal(root, journal):
 
 
 def write_bundle(root, role, updates, lock_timeout=2.0):
-    if role != 'main':
-        raise ValueError('Only main can bundle shared learning records')
+    if role not in {'main', 'analyst'}:
+        raise ValueError('Only main or analyst can bundle shared records')
     root = Path(root).resolve()
-    entries = bundle_entries(root, updates)
+    entries = bundle_entries(root, updates, role)
     with course_lock(root, lock_timeout):
         check_pending(root)
         changed = []
@@ -233,26 +255,37 @@ def write_bundle(root, role, updates, lock_timeout=2.0):
             return {'changed': False, 'paths': [], 'recovered': False}
         for entry in changed:
             backup_record(root, root / entry['path'], None if entry['previous'] is None else entry['previous'].encode('utf-8'))
-        journal = {'version': 1, 'decision': 'finish', 'updates': changed}
+        journal = {'version': 2, 'role': role, 'decision': 'finish', 'updates': changed}
         atomic_write(journal_path(root), (json.dumps(journal, ensure_ascii=False, indent=2) + '\n').encode('utf-8'))
         return dict(apply_journal(root, journal), changed=True, recovered=False)
 
 
 def recover_bundle(root, role, decision=None, lock_timeout=2.0):
-    if role != 'main':
-        raise ValueError('Only main can recover shared learning records')
+    if role not in {'main', 'analyst'}:
+        raise ValueError('Only main or analyst can recover shared records')
     root = Path(root).resolve()
     with course_lock(root, lock_timeout):
         path = journal_path(root)
         if not path.exists():
             return {'recovered': False, 'paths': []}
         journal = json.loads(path.read_text(encoding='utf-8'))
-        if not isinstance(journal, dict) or set(journal) != {'version', 'decision', 'updates'} or type(journal['version']) is not int or journal['version'] != 1 or journal['decision'] not in {'finish', 'abort'}:
+        if not isinstance(journal, dict) or type(journal.get('version')) is not int:
             raise ValueError('Unsupported pending journal; preserve it for inspection')
+        version = journal['version']
+        if version == 1 and set(journal) == {'version', 'decision', 'updates'}:
+            owner = 'main'  # Recover bundles saved by v0.2.7 and earlier.
+        elif version == 2 and set(journal) == {'version', 'role', 'decision', 'updates'} and isinstance(journal['role'], str) and journal['role'] in {'main', 'analyst'}:
+            owner = journal['role']
+        else:
+            raise ValueError('Unsupported pending journal; preserve it for inspection')
+        if not isinstance(journal['decision'], str) or journal['decision'] not in {'finish', 'abort'}:
+            raise ValueError('Unsupported pending journal; preserve it for inspection')
+        if role == 'analyst' and owner != 'analyst':
+            raise ValueError('Analyst cannot recover a main bundle')
         raw_entries = journal['updates']
         if not isinstance(raw_entries, list) or any(not isinstance(e, dict) or set(e) != {'path', 'expected', 'content', 'previous'} for e in raw_entries):
             raise ValueError('Invalid pending entries')
-        entries = bundle_entries(root, [{k: e[k] for k in ('path', 'expected', 'content')} for e in raw_entries])
+        entries = bundle_entries(root, [{k: e[k] for k in ('path', 'expected', 'content')} for e in raw_entries], owner)
         if any(str(target_path(root, e['path'])[1].relative_to(root)) != e['path'] for e in raw_entries):
             raise ValueError('Pending journal paths must be canonical')
         originals = {e['path']: e['previous'] for e in raw_entries}
@@ -290,15 +323,18 @@ def add_note(root, role, content, kind=None, lock_timeout=2.0):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
-    for action in ('read', 'write', 'note', 'bundle', 'recover'):
+    for action in ('read', 'read-set', 'write', 'note', 'bundle', 'recover'):
         cmd = sub.add_parser(action)
         cmd.add_argument('--root', required=True)
         if action in ('read', 'write'):
             cmd.add_argument('--path', required=True)
-        if action != 'read':
+        if action == 'read-set':
+            cmd.add_argument('--paths', required=True, nargs='+')
+        if action not in ('read', 'read-set'):
             cmd.add_argument('--role', required=True, choices=list(ROLE_DIRS))
             if action != 'recover':
                 cmd.add_argument('--body-file', required=True)
+        if action != 'read':
             cmd.add_argument('--lock-timeout', type=float, default=2.0)
         if action == 'write':
             cmd.add_argument('--expected', required=True)
@@ -310,6 +346,8 @@ def main():
     try:
         if args.command == 'read':
             result = read_record(args.root, args.path)
+        elif args.command == 'read-set':
+            result = read_records(args.root, args.paths, args.lock_timeout)
         elif args.command == 'recover':
             result = recover_bundle(args.root, args.role, args.decision, args.lock_timeout)
         else:
