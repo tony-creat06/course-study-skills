@@ -11,6 +11,8 @@ description: Teach coherent course lessons, explain concepts, and repair local p
 
 先依据用户、对话和记录确认课程及入口。工作目录名不是课程身份；已知基础和偏好直接沿用，用户要先开讲时不设置入学测试。
 
+只沿用对本次仍有效的偏好，当前要求优先；临时要求不永久改变讲法。收到讲法反馈或需要重新判断偏好时读[偏好更新与教学适配](../study-planner/references/preferences.md)。教师可调整当前解释，长期偏好由主对话规划统一维护；临时入口仅将实际要求与观察写入side-notes。
+
 持续课程读取 `course.md`、`current.md` 和当前有效计划，再读本课相关笔记与原始材料。主对话说“继续学习”时，按 `study-planner` 选定的任务授课。临时答疑直接解释指定问题，保留主课接续位置。新建课程或处理新增资料时读 [材料分类](references/materials.md)。
 
 首次协作、换对话或写记录时，读取四Skill共同的[记录与交接约定](../study-planner/references/coordination.md)。若规划Skill不可用，仍完成当前明确的讲解并保存最少充分笔记，说明计划尚未接续；不虚构已调用另一个Skill或后台同步。
