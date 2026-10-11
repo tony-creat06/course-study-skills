@@ -13,6 +13,10 @@ python3 <exam-analysis>/scripts/summarize_exam.py --input <题目记录.json> --
 
 相同paper ID或题号发生重复时脚本报错，要求核对重复来源后再决定合并，不静默吞掉矛盾资料。分值为null保留未知，不能当0；联合主题没有拆分依据时保留一个联合组，不能给每个标签重复记满分。
 
+小问可用 `abilities`、`styles`、`command_verbs` 三个字符串列表记录实际能力、题型和命令动词；标签按课程语义统一，未能分类用空列表，不根据动词自动猜能力。脚本在 `assessment_dimensions` 中分别汇总大题去重覆盖与联合分值组，保留小问/页码，列出未分类小问。联合组占比只以本卷当前已分析的已知可见分值为分母；各维度分别描述同一批分值，不能跨维度相加，也不能把联合组占比拆成单个能力权重。旧输入可读，但缺失的新字段保持未分类，不能宣称已分析风格。
+
+统计加上原题能力链和题设要求，按[考试依据交接](../../study-planner/references/exam-handoff.md)交给规划，由规划比较已有教学与实际作答后安排补强。统计本身不维护个人优先级或计划。
+
 去重计数模式参考[past-paper-topic-analyzer的build_freq_year](https://github.com/GeniusTrader-Harry/past-paper-topic-analyzer/blob/main/scripts/build_xlsx.py)；解析与展示分离、父题/小问结构参考其[parse_essays.py](https://github.com/GeniusTrader-Harry/past-paper-topic-analyzer/blob/main/scripts/parse_essays.py)。本脚本按本项目结构独立实现，未采用经济学专用正则。来源与具体取舍记录在项目research/reference-adoption-map.md。
 
 结构化题目JSON通过共同记录脚本的analyst角色保存；上述汇总模式也经过版本比较、锁与备份。--output只用于课程外临时计算，不直接覆盖共享分析。分值/分类完整不代表原题读法已核实；材料疑点按共同核对规则处理。

@@ -49,7 +49,11 @@ The skills treat learner-provided materials as the primary source. Recent two to
 
 This repository contains only the reusable skill instructions and their small standard-library Python helpers. It does not contain lecture notes, past papers, answers, personal progress, student work, or other course materials.
 
-This is version 0.2.6. It adds a personal teaching-experience loop: reuse relevant strategies, record concrete feedback and problems, apply a small adjustment, and retain, revise or retire it from later observations. The shared skills provide this mechanism; each learner's strategies stay in their own records. Without new evidence, existing strategies can remain unchanged; each run is not guaranteed to improve learning. It retains the scoped preference, feedback, practice and resume guidance, plus the mathematical text checks and separate assistance/outcome review fields. Legacy review inputs remain readable. The four responsibilities and normal final course depth are preserved.
+This is version 0.2.7. It makes exam evidence adoption explicit: the planner compares source-backed question styles, ability chains and observed mark allocations with existing teaching and practice, then records specific supplements and their actual coverage. History, partial-paper marks and personal priorities remain distinct. New summary fields preserve joint allocations and source parts; missing style labels stay unclassified. The four responsibilities and normal final course depth are preserved.
+
+It also fixes numeric unclosed-formula and common raw-LaTeX detection gaps, clarifies author solutions versus student delivery, and adds recoverable multi-file saves plus public synthetic record/statistics regressions. The record writer supports POSIX locking on macOS/Linux; Windows writing has not been implemented or tested. A bundle updates files in sequence, with a pending journal and explicit finish/abort recovery, rather than promising simultaneous atomic publication. Complete any pending bundle before rolling back to an older writer. Existing course formats remain readable without migration.
+
+The personal teaching-experience loop remains lightweight: reuse relevant strategies, record concrete feedback and problems, apply a small adjustment, and retain, revise or retire it from later observations. Each learner's strategies stay in their own records. Without new evidence, strategies can remain unchanged; each run is not guaranteed to improve learning.
 
 Personalization uses local course records, not automatic rewriting of the shared skill source. Preferences can change or be withdrawn. Cross-course reuse requires the same learner and explicitly general preferences from designated records; personal records are not published with this bundle.
 
@@ -63,7 +67,7 @@ Run `python3 -B -m unittest discover -s tests -v` for helper regressions. Mathem
 python3 skills/course-study/scripts/check_math.py <saved-lesson.md>
 ```
 
-The text checker flags common delimiter, brace, and command-escaping mistakes. It does not render formulas or verify their meaning; inspect warnings in context. Test data in this repository is synthetic and contains no learner records or course PDFs.
+The text checker flags common delimiter, brace, and command-escaping mistakes. It does not render formulas or verify their meaning; inspect warnings in context. HTML checks catch common raw mathematical commands, not every possible TeX expression. Test data in this repository is synthetic and contains no learner records or course PDFs. Record tests include a real subprocess interruption followed by recovery, stale writes, manual edits, role boundaries and lock contention. Simulated platform fallback tests do not establish Windows support.
 
 ## Design references
 

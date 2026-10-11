@@ -50,4 +50,15 @@ python3 <study-planner>/scripts/course_records.py note --root <课程目录> --r
 
 写后回读。保留用户手改内容；更正说明依据，原资料只读。成功保存才报告已保存，失败时提供可复制的接续摘要。讲过、看过答案、提示后成功、独立成功与隔时保持分别记录；不保存内部思维过程或没有发生的错误。
 
-协作锁和旧版本备份保存在课程根目录的隐藏`.course-records.lock`与`.history/`中，属于恢复元数据，不是另一份课堂笔记。不擅自改Obsidian设置或删备份；用户要求调整备份存放时再选择位置。它们保护通过脚本的写入，外部编辑器不会自动遵守锁，手改仍需写前回读。
+同一次课堂/反馈同时改变笔记、计划与检查点时，main优先用 `bundle` 提交关联更新，避免单文件写入中断后留下旧进度。先逐项read，准备UTF-8 JSON：`{"updates":[{"path":"practice/<ID>.md","expected":"absent","content":"实际练习正文"},{"path":"current.md","expected":"<原SHA>","content":"对应的检查点正文"}]}`，需要改计划/共同事实时加入同一批。每项正文是完整更新后的文件，实际ID稳定且先与已有练习核对。全部角色、路径、JSON和旧SHA通过才更新公开记录，`current.md`最后写；未改内容保留原mtime。
+
+```text
+python3 <study-planner>/scripts/course_records.py bundle --root <课程目录> --role main --body-file <关联更新.json>
+python3 <study-planner>/scripts/course_records.py recover --root <课程目录> --role main
+```
+
+批量提交是可恢复的顺序写入，并非所有文件同时原子替换。隐藏 `.course-records.pending.json` 保留中断恢复信息；存在时脚本拒绝普通read/write，main先recover，再回读相关笔记、计划和检查点，从实际记录接续，不能重发已保存的练习或补造学生回答。默认恢复完成该批更新；若检测到手改则保留手改、停止覆盖并报出冲突。需要取消未完成批次时main可用 `recover --decision abort`：只回退仍匹配该批旧/新版本的文件，保留其他手改并报告路径，取消内容留 `.history/`；随后回读合并、重新核对课堂断点再提交。中断中的批次应先恢复/取消，再回退Skill版本；不能直接删journal绕过检查。
+
+写入助手支持macOS/Linux的POSIX锁；Windows写入尚不支持，读取普通旧记录不要求锁库。工具不可用时仍保留独立笔记/可复制摘要，不能宣称已经安全同步。课程文件旧格式沿用，不需要批量迁移。
+
+协作锁、批次journal和旧版本备份保存在课程根目录的隐藏`.course-records.lock`、`.course-records.pending.json`与`.history/`中，属于恢复元数据，不是另一份课堂笔记。不擅自改Obsidian设置或删备份；用户要求调整备份存放时再选择位置。它们保护通过脚本的写入，外部编辑器不会自动遵守锁，手改仍需写前回读；不声称断电持久性、跨设备同步或任意外部编辑期间的多文件快照一致性。

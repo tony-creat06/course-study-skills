@@ -23,6 +23,16 @@ math = load('math_check', 'skills/course-study/scripts/check_math.py')
 
 
 class ReviewEvidenceTests(unittest.TestCase):
+    def test_raw_math_commands_are_rejected_but_code_paths_and_mathml_work(self):
+        for source in (r'\theta', r'\int_0^1 x dx', r'\sum_n a_n', r'\omega', r'\mathrm{e}', r'\Phi'):
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, 'Raw LaTeX'):
+                review.render_fragment('<p>' + source + '</p>', ROOT)
+        for fragment in (r'<pre>\int_0^1 x dx</pre>', r'<code>\theta</code>',
+                         r'<p>C:\Users\theta\notes.txt</p>',
+                         '<math><mi>θ</mi><mo>+</mo><munderover><mo>∫</mo><mn>0</mn><mn>1</mn></munderover><mi>x</mi></math>'):
+            with self.subTest(fragment=fragment):
+                self.assertTrue(review.render_fragment(fragment, ROOT))
+
     def setUp(self):
         self.item = {'id': 'synthetic-q1', 'title': 'Synthetic practice', 'source': 'Test fixture',
                      'question_html': '<p>Compute <math><mn>2</mn><mo>+</mo><mn>3</mn></math>.</p>',
@@ -131,6 +141,14 @@ class ReviewEvidenceTests(unittest.TestCase):
 
 
 class MathematicalDeliveryTests(unittest.TestCase):
+    def test_numeric_unclosed_math_is_not_mistaken_for_price(self):
+        for example in ('$2x+1', '$2 x+1', '$2^2', '$2=3', '$2/3'):
+            with self.subTest(example=example):
+                self.assertTrue(any(issue['severity'] == 'error' for issue in math.check(example)))
+        for example in ('Price is $20.', '$20.', 'The cost is $20 per person.'):
+            with self.subTest(example=example):
+                self.assertEqual(math.check(example), [])
+
     def test_saved_baseline_command_typo_is_found(self):
         issues = math.check(r'The real amplitude is $A_{mathrm{real}}$.')
         self.assertTrue(any(x['kind'] == 'missing-backslash' for x in issues))

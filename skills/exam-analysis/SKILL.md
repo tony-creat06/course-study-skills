@@ -31,4 +31,6 @@ description: Analyze provided past papers, marking schemes, and current course r
 
 输出向规划提供证据与建议重点，向题目模块提供原题锚点和题型要求。没有新的资料或范围变化时复用已有有效分析，不每课重做。
 
+按[考试依据交接](../study-planner/references/exam-handoff.md)返回可观察风格/偏好、带范围的分值要求与能力链、分析版本及未覆盖页。建议不是已执行计划；规划在接续时决定补讲和练习，并核对实际落实。
+
 供教学/出题复用时，在 `exam/profile.md` 保留少量有代表性的能力链与题设边界：来源小问、需要选择/解释/推导什么、前后依赖及允许使用的结果。它们是原卷要求的例证，频次汇总不能替代这些信息。已有分析已包含时直接沿用。

@@ -28,7 +28,15 @@ MATH_ATTRS = {'display', 'mathvariant', 'stretchy', 'symmetric', 'fence', 'separ
 HTML_ATTRS = {'img': {'src', 'alt', 'width', 'height'}, 'a': {'href', 'title'},
               'td': {'colspan', 'rowspan'}, 'th': {'colspan', 'rowspan', 'scope'}}
 VOID = {'br', 'img'}
-RAW_TEX = re.compile(r'\\(?:frac|sqrt|begin|end|partial|hbar|psi|lambda|alpha|beta|left|right)\b|\\[()\[\]]|\$[^$\n]+\$')
+RAW_TEX = re.compile(
+    r'(?<![:\\])\\(?:frac|dfrac|tfrac|sqrt|begin|end|partial|hbar|'
+    r'alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|vartheta|iota|kappa|'
+    r'lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|varphi|chi|psi|omega|'
+    r'Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega|'
+    r'int|iint|iiint|oint|sum|prod|lim|infty|sin|cos|tan|exp|log|ln|'
+    r'left|right|cdot|times|pm|mp|leq|geq|neq|approx|equiv|'
+    r'vec|hat|bar|overline|dot|ddot|text|mathrm|mathbf|mathit|mathbb|mathcal|operatorname)(?![A-Za-z])'
+    r'|\\[()\[\]]|\$[^$\n]+\$')
 
 
 def evidence_label(item):
@@ -104,7 +112,9 @@ def render_fragment(fragment, base):
         raise ValueError('Question/solution fragment has no visible content')
 
     def text_node(value, code=False):
-        if not code and RAW_TEX.search(value or ''):
+        # Literal Windows paths are prose; mathematical commands still require typesetting.
+        inspected = re.sub(r'\b[A-Za-z]:\\[^\s<>]+', '', value or '')
+        if not code and RAW_TEX.search(inspected):
             raise ValueError('Raw LaTeX detected: typeset it with MathML')
         return escape(value or '')
 

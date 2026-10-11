@@ -48,6 +48,8 @@ def analyze_paper(paper):
         raise ValueError('questions must be a list')
     seen = set()
     primary, coverage, abilities, mark_groups = Counter(), Counter(), Counter(), Counter()
+    dimensions = {name: {'coverage': Counter(), 'marks': Counter(), 'parts': defaultdict(list), 'unclassified': 0}
+                  for name in ('abilities', 'styles', 'command_verbs')}
     unknown_marks, unclassified_parts, part_count = 0, 0, 0
     for question in questions:
         number = question.get('number')
@@ -65,10 +67,12 @@ def analyze_paper(paper):
         if not isinstance(parts, list) or not parts:
             raise ValueError('Represent at least one part, even if marks/topics are unknown')
         part_ids, question_topics, question_abilities = set(), set(), set()
+        question_dimensions = {name: set() for name in dimensions}
         for part in parts:
             label = part.get('label')
-            if not isinstance(label, str) or not label.strip() or label in part_ids:
+            if not isinstance(label, str) or not label.strip() or label.strip() in part_ids:
                 raise ValueError('Part labels must be nonempty and unique within a question')
+            label = label.strip()
             part_ids.add(label)
             page = part.get('source_page')
             if page is not None and (not isinstance(page, int) or isinstance(page, bool) or page < 1):
@@ -86,8 +90,18 @@ def analyze_paper(paper):
             else:
                 # One part is one allocation. Multiple topics form one joint group.
                 mark_groups[tuple(topics) if topics else (UNKNOWN,)] += marks
+            for name, dimension in dimensions.items():
+                labels = topic_list(part.get(name, []))
+                question_dimensions[name].update(labels)
+                dimension['unclassified'] += not bool(labels)
+                if marks is not None:
+                    group = tuple(labels)
+                    dimension['marks'][group] += marks
+                    dimension['parts'][group].append({'question': identity, 'part': label, 'source_page': page})
         coverage.update(question_topics or {UNKNOWN})
         abilities.update(question_abilities)
+        for name, labels in question_dimensions.items():
+            dimensions[name]['coverage'].update(labels)
     known_marks = sum(mark_groups.values())
     expected = paper.get('expected_available_marks')
     if expected is not None and not valid_number(expected):
@@ -109,10 +123,19 @@ def analyze_paper(paper):
             'unclassified_parts': unclassified_parts,
             'mark_groups': [{'topics': list(group), 'marks': marks}
                             for group, marks in sorted(mark_groups.items())],
+            'assessment_dimensions': {
+                name: {'question_coverage': percentages(dimension['coverage'], count),
+                       'unclassified_parts': dimension['unclassified'],
+                       'joint_mark_groups': [
+                           {'labels': list(group), 'marks': marks,
+                            'percent_of_known_available_marks': None if not known_marks else round(100 * marks / known_marks, 4),
+                            'parts': dimension['parts'][group]}
+                           for group, marks in sorted(dimension['marks'].items())]}
+                for name, dimension in dimensions.items()},
             'available_mark_total_check': check,
             'candidate_required_marks': known_marks if required is True and paper['scope_complete'] and not unknown_marks else None,
             'scope_note': '完整已声明范围' if paper['scope_complete'] else '部分试卷，不能据此声称全卷覆盖',
-            'marks_note': '联合组只计一次；未知分值未当作0；可见分值不自动等于考生必答总分'}
+            'marks_note': '各维度内联合组只计一次，跨维度不可相加；百分比分母仅为当前已分析的已知可见分值；未知分值未当作0；可见分值不自动等于考生必答总分'}
 
 
 def summarize(data):
