@@ -49,7 +49,7 @@ The skills treat learner-provided materials as the primary source. Recent two to
 
 This repository contains only the reusable skill instructions and their small standard-library Python helpers. It does not contain lecture notes, past papers, answers, personal progress, student work, or other course materials.
 
-This is version 0.2.3. It separates practice assistance from outcome in HTML reviews, checks common mathematical Markdown mistakes, and makes local teaching repair and later review tasks more specific. Legacy review inputs remain readable. The four responsibilities and normal final course depth are preserved.
+This is version 0.2.4. It adds focused guidance for judging student reasoning, adjusting practice support, preserving method selection in integrated exercises, and resuming accumulated records. It retains the v0.2.3 mathematical text checks and separate assistance/outcome review fields. Legacy review inputs remain readable. The four responsibilities and normal final course depth are preserved.
 
 Helper regressions and bounded simulated use check software and workflow behavior. They do not establish superior learning, long-term retention, or exam results compared with direct-file tutoring. Important course-specific content still needs checking against the teaching materials.
 
@@ -66,6 +66,8 @@ The text checker flags common delimiter, brace, and command-escaping mistakes. I
 ## Design references
 
 The workflow adapts specific ideas from [Revision Tutor](https://github.com/yangcodingmaster/Revision-Tutor/blob/main/SKILL.en.md) (local reasoning gaps), [OpenTutor](https://github.com/LEARNableLabs/opentutor/blob/main/docs/methodology.md) (concrete revisit and variation tasks), and [DeepTutor](https://arxiv.org/html/2604.26962v3) (source grounding and separate tutoring/practice evaluation). These inform the design; their reported evaluations do not validate this bundle. Coherent lectures, optional in-class checks, and most practice after class remain the defaults.
+
+The [IES study guide](https://ies.ed.gov/ncee/wwc/practiceguide/1) informs the combination of worked examples and problem solving. [Carnegie Mellon's learning principles](https://www.cmu.edu/teaching/principles/learning.html) inform targeted feedback and practice that integrates skills and requires choosing when to apply them. These are design grounds, not evidence that this bundle improves an individual student's outcomes.
 
 ## License
 

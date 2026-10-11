@@ -11,6 +11,8 @@ description: Select or create course-grounded practice questions, variants, comp
 
 沿用规划或用户指定的用途、能力、已讲范围、个人薄弱点与可用时间。分清课堂示范、课后小练习、单元综合练习和模拟考试；小练习可拆解必要能力，综合/模拟题再匹配真实卷结构。不让每个基础问题都套成考试大题。
 
+需要从示范过渡到独立解题、调整支持或设计综合方法选择时，读取[练习支持与方法选择](references/practice-progression.md)。按实际证据选择任务，不把所有学生固定放在同一训练阶段。
+
 读取当前相关讲义、习题/答案与有效考试分析；新课程先核对资料身份与实际范围，不把旧卷当现行要求。共享课程写入遵循[共同记录约定](../study-planner/references/coordination.md)，规范题目与解析保存在 `questions/`。临时答疑优先直接讲解并记side-notes，不启动整套出题流程。
 
 ## 来源与设计
