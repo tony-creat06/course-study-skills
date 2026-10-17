@@ -1,6 +1,6 @@
 ---
 name: study-planner
-description: Lead ongoing course self-study, choose the next lesson or practice, and maintain one flexible exam-aware plan with traceable learning evidence. Use for continuing study, review, practice feedback, planning, or resuming shared course records.
+description: Lead sustained systematic course study from a course-material set or established course records, selecting lessons, practice and review with one traceable plan. Use for that course workflow or explicit invocation; do not implicitly activate this suite for lab procedures, reports, risk/data tasks or isolated questions.
 ---
 
 # 私人学习规划
@@ -9,9 +9,13 @@ description: Lead ongoing course self-study, choose the next lesson or practice,
 
 ## 开始与接续
 
-先识别课程、主学习/临时答疑入口与课程记录路径，不能据工作目录推定课程。首次协作或写入前读[共同记录约定](references/coordination.md)。已有课程先读取 `course.md`、`current.md`、`study-plan.md`，再读相关笔记与原始来源。
+首次自动接入前按[共同记录约定](references/coordination.md)确认用户正在依成套资料进行持续系统课程学习；已有对应记录可接续，整学期资料无需一次上传。实验操作、实验报告、风险评估、实验数据和零散问题按当前任务处理，不自动建立本组课程。明确点名某个模块只使用其指定职责，不等于启动全部模块。
 
-在下次学习开始或自然课间自动查看新增 `side-notes/`。采用实际疑问、作答和提示条件，结合已有证据安排补强；保留原课堂接续位置，并在 `current.md` 记录已处理的答疑ID，重复读取不重复推进。新资料、目标或日期变化时检查原计划与考试分析是否仍适用。
+先识别课程、主学习/临时答疑入口与课程记录路径，不能据工作目录推定课程。首次协作或写入前读共同记录约定。已有课程先读取 `course.md`、`current.md`、`study-plan.md`，再读相关笔记与原始来源。
+
+每次课程接续先按[课程文件入口](references/course-files.md)扫描资料清单，检查待整理入口及已归档文件的新增、修改和缺失；没有实际运行就没有后台接收。首次合格课程建立入口，旧课程下次接续时按同一流程接入并整理，保留既有记录路径。向用户说明资料应放在哪里、实际接收/待确认结果与本次影响范围。
+
+在下次学习开始或自然课间自动查看新增 `side-notes/`。采用实际疑问、作答和提示条件，结合已有证据安排补强；保留原课堂接续位置，并在 `current.md` 记录已处理的答疑ID，重复读取不重复推进。新资料、目标或日期变化时只检查受影响的原计划、考试分析和笔记是否仍适用，保留历史学习事实。
 
 用户只说“继续学习”时主动选当前最合适的一项并开始，简短说明与上次的联系。不每次重访谈、重建计划或全量读取资料；仅在本次安排确实依赖且未知时了解可用时间。
 
@@ -29,11 +33,13 @@ description: Lead ongoing course self-study, choose the next lesson or practice,
 
 调整时说明主要变化与代价，不能改写过去的学习事实。主线、局部课堂和历史题频不互相生成第二套路线。
 
-## 按需组织三个专业职责
+## 按需组织四个专业职责
 
 - 当前主题讲解交给 `course-study`：传递目标、范围、相关材料与必要先修；让教师直接授课，不逐句重写输出。
 - 需要考试要求、题型或版本核对时使用 `exam-analysis`；已有适用分析直接复用，不能仅按题频取消必学内容。
 - 正式练习需要选题、变式或新题时使用 `practice-builder`：提供用途、所测能力、已讲范围、相关薄弱点、时间约束与考试依据。
+
+- 章节知识笔记交给 `study-notes`：从已保存的四模块反馈交付课程根目录、稳定课/章ID、课章归属、已讲范围与来源快照；按章持续积累，课级笔记按需保留，无需学生补填输入。
 
 这些是指引的按需使用，不代表自动启动了多个独立AI或完成了未执行的工具调用。专业结果返回证据、完成内容与未解项，安排决定回到本流程。
 
@@ -55,8 +61,16 @@ description: Lead ongoing course self-study, choose the next lesson or practice,
 
 回访也少量包含核心且此前独立做对的能力，用隔时、新情境或综合连接观察保持情况；不把所有复习都变成错题队列，不因一次做对永久免复习。
 
+## 随课更新章节笔记与课程整理
+
+一课完成并保存实际反馈后，按[笔记反馈交接](../study-notes/references/handoff.md)接入study-notes，更新所属章节同一份连贯正文；课级笔记按需保留，不要求每课先生成独立文件。传递当前有效偏好、已讲内容、课章归属、原来源定位和相关记录SHA；无需每次重跑考试/出题模块。一课分多次完成沿用同一ID，章笔记明确已讲范围，不把自然暂停当成章节完成。章节结束由本流程确认完整范围；整门课程完成后，再交付完成范围及实际学习反馈，由笔记模块重新组织全课程的联系与方法，不提前补写未学章节或只拼接章文件。
+
+接收笔记时核对原反馈重点的覆盖映射及未展开原因；来源疑点/教学缺口交原维护者，不把内容覆盖当学习掌握。网页的回忆/提示点击也不记作学生回答。
+
+在current中维护笔记路径与必要待整理范围，并按[课程文件入口](references/course-files.md)更新学生可见的产出索引；未生成的笔记、题目或题解说明当前状态，不用空目录冒充交付。计划与作答证据仍由本流程维护。新增卡点或来源更正后，在自然课间更新受影响笔记；无变化复用。笔记失败保留课堂完成与下一步，重试笔记不重播教学或练习。看过笔记、展开解释、回忆提示都不自动成为作答/掌握证据；正式作答继续按原反馈流程记录。
+
 ## 单元题解集
 
 单元答题完成后，汇编实际做过题目的完整题干、条件/小问/必要图示、完整推理与结果，附真实个人卡点、提示/完成情况；没有发生的错误不补写。解析有误先更正同一题目记录再更新阅读输出。
 
-读取[HTML题解输出](references/html-review.md)，使用原生数学排版和脚本生成可离线阅读的HTML。文档是题目与练习记录的阅读输出，不另建掌握状态或计划。最后核对已做题清单、公式、图示及渲染效果；结构检查通过不能代替学科正确性或用户体验验收。
+读取[HTML题解输出](references/html-review.md)，使用原生数学排版和脚本生成可离线阅读的HTML，并将实际保存路径加入课程产出索引。文档是题目与练习记录的阅读输出，不另建掌握状态或计划。最后核对已做题清单、公式、图示及渲染效果；结构检查通过不能代替学科正确性或用户体验验收。

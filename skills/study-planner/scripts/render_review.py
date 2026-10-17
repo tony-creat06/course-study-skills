@@ -2,7 +2,6 @@
 """Render completed-question records as an offline HTML document with native MathML."""
 import argparse
 import importlib.util
-import base64
 from html import escape
 import json
 import os
@@ -73,24 +72,10 @@ def evidence_label(item):
     return ' · '.join(labels)
 
 
-def image_data(value, base):
-    relative = Path(value)
-    if urlsplit(value).scheme or relative.is_absolute() or '..' in relative.parts:
-        raise ValueError('Images must be local paths beneath the input JSON folder')
-    path = (base / relative).resolve()
-    path.relative_to(base.resolve())
-    data = path.read_bytes()
-    if len(data) > 20 * 1024 * 1024:
-        raise ValueError('Image exceeds 20 MB')
-    if data.startswith(b'\x89PNG\r\n\x1a\n'):
-        mime = 'image/png'
-    elif data.startswith(b'\xff\xd8\xff'):
-        mime = 'image/jpeg'
-    elif data.startswith(b'RIFF') and data[8:12] == b'WEBP':
-        mime = 'image/webp'
-    else:
-        raise ValueError('Only PNG/JPEG/WebP image files are supported')
-    return 'data:' + mime + ';base64,' + base64.b64encode(data).decode('ascii')
+IMAGE_SPEC = importlib.util.spec_from_file_location('review_passive_images', Path(__file__).with_name('passive_images.py'))
+images = importlib.util.module_from_spec(IMAGE_SPEC)
+IMAGE_SPEC.loader.exec_module(images)
+image_data = images.image_data
 
 
 def local_tag(tag):
@@ -229,7 +214,7 @@ def main():
                 raise ValueError('Use --output for scratch output, or the full protected-output options')
             destination = Path(args.output)
         source = Path(args.input)
-        if source.resolve() == destination.resolve():
+        if source.resolve() == destination.resolve() or (destination.exists() and source.samefile(destination)):
             raise ValueError('Output must not overwrite source records')
         output = render(json.loads(source.read_text(encoding='utf-8')), source.resolve().parent)
         if protected:

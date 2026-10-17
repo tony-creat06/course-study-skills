@@ -1,6 +1,12 @@
 # 共同课程记录与双对话交接
 
-四个Skill协作和写记录时读取本页；这是同一份运行约定。课程内容留在课程文件夹，Skill分发包不包含个人资料。Markdown可直接供Obsidian打开，不依赖插件。
+五个Skill协作和写记录时读取本页；这是同一份运行约定。课程内容留在课程文件夹，Skill分发包不包含个人资料。Markdown可直接供Obsidian打开，不依赖插件。
+
+## 适用范围与启动
+
+本组用于以成套课程资料为依据的持续、系统课程教学。自动启用前确认用户正开展这种学习，且已有可识别的课程范围和可用教学主线，或已有对应系统课程记录。成套不等于整学期材料已全部上传；逐周提供讲义和字幕可正常接续。单凭课程名、一个PDF或学习词汇不启动全组。
+
+实验操作、仪器说明、风险评估、实验数据处理与实验报告默认按当前任务处理，不自动建立课程计划和学习记录；已有理论课程记录也不把另一个实验任务变成续学。零散概念/题目请求直接回答；已建立系统课程内的临时答疑可按原side-notes入口。用户明确点名一个Skill时完成其指定职责，不因使用一个模块就调用五个模块或强建系统课程。用户明确要系统学习实验课程的理论大纲时，按该明确目标判断。
 
 ## 身份与存放
 
@@ -11,14 +17,20 @@
 | 记录 | 内容/维护者 |
 | --- | --- |
 | `course.md` | 身份、目标、基础自述、时间/日期、有效偏好与个人教学策略及其来源/范围、原始材料路径；主对话维护共同事实 |
+| `materials.json`、`materials-index.md` | 字节校验、类型归档与章节定位索引；教师判断用途，主流程用文件助手登记和派生 |
+| `index.md`、`index.html` | 实际资料与产出入口；规划派生维护，不存第二套进度 |
 | `materials.md`、`course-map.md` | 材料用途/实际阅读范围、内容与先修关系；教师维护，不是第二份日程 |
 | `study-plan.md` | 唯一有效执行计划、当前模式、依据与调整理由；主对话规划维护 |
 | `current.md` | 实际讲到的位置、未解项、下一步及来源、返回点、已处理答疑ID；主对话维护 |
 | `lessons/`、`practice/` | 可复习的课堂笔记、实际作答/提示与反馈；主对话维护 |
 | `side-notes/` | 临时概念/指定题目、实际作答/提示、未解项；答疑入口每次独立记录 |
-| `exam/` | 来源可追溯的考试要求、题目结构记录与统计；分析模块维护 |
-| `questions/` | 原题/变式/新题、完整解析、核对范围；题目模块维护 |
+| `exam/` | 分析模块维护详细考试/题目工作记录，以及面向学生的brief.md简报；产出入口只链接简报 |
+| `questions/` | 原题/变式/新题、完整解析、核对范围；题目模块维护；新文件分prompts/与solutions/，旧路径保留 |
+| `transcripts/` | 字幕派生读法与纠正疑点；教师/主流程维护，原始字幕留资料目录 |
 | `reviews/` | 已做题HTML阅读输出；规划汇编，不作为另一份学习状态 |
+| `notes/` | 从四模块反馈派生的章节正文、课程整理HTML及内部JSON；笔记模块维护，不承载计划或掌握状态 |
+
+资料与产出按[课程文件工作流](course-files.md)组织：首次建立/旧课程下次接续说明实际inbox、归档及记录绝对路径；每次接续扫描新增/变化，保存后刷新可点击产出入口。原资料按类型归档并以章节索引关联；不把课程outputs当新资料反复导入。
 
 按实际需要建立，不能先生成一堆空文件。旧原型的course/materials/current/lessons直接保留。首次接续读出已讲位置、真实证据与未解项，仅在需要时补study-plan或course-map；原课堂文件继续用原路径，不因脚本接管重命名、重播或转换成“已掌握”。旧records.md已由本共同约定接续，不需要为课程文件做批量格式迁移。
 
@@ -44,12 +56,12 @@ python3 <study-planner>/scripts/course_records.py write --root <课程目录> --
 python3 <study-planner>/scripts/course_records.py note --root <课程目录> --role aside --body-file <本次答疑笔记>
 ```
 
-写入范围按角色和目录限定：main维护共同Markdown、lessons/practice的Markdown及reviews的JSON/HTML；analyst维护exam的Markdown/JSON；questions维护questions的Markdown/JSON；aside仅新增side-notes的Markdown。JSON写入先检查语法；语义与证据仍由模块核对。共享JSON也先read再write。汇总/HTML脚本写课程输出时使用--root/--path/--expected模式，从而保留同样版本保护；--output用于课程外临时预览，不是共享记录覆盖的捷径。
+写入范围按角色和目录限定：main维护共同Markdown、materials.json、派生index.md/index.html/materials-index.md、lessons/practice的Markdown、transcripts的Markdown/JSON及reviews的JSON/HTML；analyst维护exam的Markdown/JSON；questions维护questions的Markdown/JSON；aside仅新增side-notes的Markdown；notes仅维护notes的JSON/HTML。笔记不能写共同事实、计划、断点、考试、题目或作答目录。notes不能bundle或recover，原main/analyst批次能力保持原边界；正式笔记由[笔记渲染器](../../study-notes/references/offline-notes.md)同锁核对来源和目标版本后保存。JSON写入先检查语法；语义与证据仍由模块核对。共享JSON也先read再write。汇总/HTML脚本写课程输出时使用--root/--path/--expected模式，从而保留同样版本保护；--output用于课程外临时预览，不是共享记录覆盖的捷径。
 
-多个文件共同描述一份考试分析时，先用 `read-set` 一次取得相关原题记录、profile和统计的内容/SHA，分析模块在课程外准备新正文及统计，再以 `bundle --role analyst` 整批提交到exam。不能逐个write这些关联结果后称整份分析已发布。规划采用时、教师或题目模块自行读取当前考试依据时，同样用read-set读取本次需要的关联文件；规划已传递完整快照内容与SHA时可直接复用。未建立的文件会返回absent；缺失资料仍需补齐或明确范围，不因取得快照而变为完整分析。
+多个文件共同描述一份考试分析时，先用 `read-set` 一次取得相关原题记录、profile、统计与本次相关brief的内容/SHA，分析模块在课程外准备新正文及统计，再以 `bundle --role analyst` 整批提交到exam。不能逐个write这些关联结果后称整份分析已发布。规划采用时、教师或题目模块自行读取当前考试依据时，同样用read-set读取本次需要的关联文件；规划已传递完整快照内容与SHA时可直接复用。未建立的文件会返回absent；缺失资料仍需补齐或明确范围，不因取得快照而变为完整分析。
 
 ```text
-python3 <study-planner>/scripts/course_records.py read-set --root <课程目录> --paths exam/items.json exam/profile.md exam/summary.json
+python3 <study-planner>/scripts/course_records.py read-set --root <课程目录> --paths exam/items.json exam/profile.md exam/summary.json exam/brief.md
 python3 <study-planner>/scripts/course_records.py bundle --root <课程目录> --role analyst --body-file <关联分析更新.json>
 ```
 
@@ -57,7 +69,7 @@ python3 <study-planner>/scripts/course_records.py bundle --root <课程目录> -
 
 临时内容在side-notes；主课堂笔记用role main和kind lesson/practice。根目录及角色每次与当前课程核对。工具不可用时可顺序保存独立笔记，但共享计划的覆盖必须保留写前回读和备份；两个活跃对话无法保证写入安全时先保留独立条目，不称已同步。
 
-写后回读。保留用户手改内容；更正说明依据，原资料只读。成功保存才报告已保存，失败时提供可复制的接续摘要。讲过、看过答案、提示后成功、独立成功与隔时保持分别记录；不保存内部思维过程或没有发生的错误。
+写后回读。保留用户手改内容；更正说明依据，外部原资料只读，已授权管理的inbox按文件工作流校验归档，原始字节不改写。成功保存才报告已保存，失败时提供可复制的接续摘要。讲过、看过答案、提示后成功、独立成功与隔时保持分别记录；不保存内部思维过程或没有发生的错误。
 
 同一次课堂/反馈同时改变笔记、计划与检查点时，main优先用 `bundle` 提交关联更新，避免单文件写入中断后留下旧进度。先逐项read，准备UTF-8 JSON：`{"updates":[{"path":"practice/<ID>.md","expected":"absent","content":"实际练习正文"},{"path":"current.md","expected":"<原SHA>","content":"对应的检查点正文"}]}`，需要改计划/共同事实时加入同一批。每项正文是完整更新后的文件，实际ID稳定且先与已有练习核对。全部角色、路径、JSON和旧SHA通过才更新公开记录，`current.md`最后写；未改内容保留原mtime。
 

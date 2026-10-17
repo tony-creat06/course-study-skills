@@ -133,5 +133,47 @@ class ExamStatisticsTests(unittest.TestCase):
             self.assertFalse((base / 'records/reviews').exists())
 
 
+class ExamCliPathTests(unittest.TestCase):
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.base = Path(self.folder.name)
+        self.source = self.base / 'draft.json'
+        self.source.write_text(json.dumps({'papers': [paper()]}), encoding='utf-8')
+
+    def run_cli(self, destination):
+        return subprocess.run([sys.executable, '-B', str(SCRIPT), '--input', str(self.source),
+                               '--output', str(destination)], text=True, capture_output=True)
+
+    def assert_alias_rejected(self, destination):
+        before = self.source.read_bytes(), self.source.stat().st_mtime_ns
+        alias_before = destination.read_bytes(), destination.stat().st_mtime_ns
+        result = self.run_cli(destination)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn('Output must not overwrite', result.stderr)
+        self.assertEqual((self.source.read_bytes(), self.source.stat().st_mtime_ns), before)
+        self.assertEqual((destination.read_bytes(), destination.stat().st_mtime_ns), alias_before)
+        self.assertTrue(self.source.samefile(destination))
+
+    def test_cli_rejects_hard_link_alias(self):
+        alias = self.base / 'hard-link.json'
+        alias.hardlink_to(self.source)
+        self.assert_alias_rejected(alias)
+
+    def test_cli_rejects_case_alias_on_case_insensitive_filesystem(self):
+        alias = self.base / 'Draft.json'
+        if not alias.exists() or not self.source.samefile(alias):
+            self.skipTest('Case-insensitive filesystem required')
+        self.assert_alias_rejected(alias)
+
+    def test_cli_renders_distinct_output_and_preserves_input(self):
+        before = self.source.read_bytes(), self.source.stat().st_mtime_ns
+        destination = self.base / 'summary.json'
+        result = self.run_cli(destination)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(json.loads(destination.read_text(encoding='utf-8'))['papers']), 1)
+        self.assertEqual((self.source.read_bytes(), self.source.stat().st_mtime_ns), before)
+
+
 if __name__ == '__main__':
     unittest.main()

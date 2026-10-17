@@ -1,6 +1,6 @@
 ---
 name: exam-analysis
-description: Analyze provided past papers, marking schemes, and current course requirements into traceable exam coverage, question styles, and topic statistics. Use to establish or refresh exam evidence for teaching and practice; do not create the student's study schedule.
+description: Analyze past papers, marking schemes and current requirements into traceable exam coverage, question styles and topic statistics. Use within an established systematic course or when explicitly invoked; isolated lab/report tasks do not implicitly activate this course suite. Do not create the study schedule.
 ---
 
 # 考试要求与历年卷分析
@@ -9,9 +9,9 @@ description: Analyze provided past papers, marking schemes, and current course r
 
 ## 核验范围与资料
 
-沿用已知课程身份、适用学年、考核形式与范围。缺少的关键信息从材料核对；确实无法判断才问一个问题。封面日期、适用学年和文件名分别记录。老师revision、公式表、习题与评分说明用于补充要求；mock、练习卷和正式真题分别标注。
+自动接入遵循[共同记录约定](../study-planner/references/coordination.md)的系统课程适用范围；用户明确点名本Skill时可单独分析指定试卷，不建立整套课程。沿用已知课程身份、适用学年、考核形式与范围。缺少的关键信息从材料核对；确实无法判断才问一个问题。封面日期、适用学年和文件名分别记录。老师revision、公式表、习题与评分说明用于补充要求；mock、练习卷和正式真题分别标注。
 
-持续课程读 `course.md`、`materials.md`和已有 `exam/`分析，只重读变化或当前需要的原始页。写入共享课程时遵循[共同记录约定](../study-planner/references/coordination.md)，输出进入 `exam/`；不修改计划、课堂进度或学生掌握记录。
+持续课程读 `course.md`、`materials.md`和已有 `exam/`分析，只重读变化或当前需要的原始页。新增来源按[课程文件入口](../study-planner/references/course-files.md)接收，由教师确认用途与章节；资料变动只刷新受影响分析。写入共享课程时遵循[共同记录约定](../study-planner/references/coordination.md)，输出进入 `exam/`；不修改计划、课堂进度或学生掌握记录。
 
 ## 理解实际考查
 
@@ -23,14 +23,18 @@ description: Analyze provided past papers, marking schemes, and current course r
 
 ## 统计与可复用输出
 
-读[分析数据与统计](references/analysis.md)，保存一份结构化题目记录和简明 `exam/profile.md`：当前要求、历史题型/能力、近年与旧卷区别、来源位置、缺口和适用版本。
+读[分析数据与统计](references/analysis.md)，保存一份结构化题目记录和内部 `exam/profile.md`，并交付学生可见的 `exam/brief.md` 简报：当前要求、历史题型/能力、近年与旧卷区别、来源位置、缺口和适用版本。
 
 沿用按大题主要主题去重的宏观分布；另保留知识点覆盖与小问分值。覆盖可重叠，分值不重复分配；同一小问联合考点没有评分细分时保留联合分值。说明统计单位、分母、已分析范围、未分类/未知分值和选答影响。
 
-`scripts/summarize_exam.py`只对已经理解并标注的JSON计数，不读取PDF、不自动判断题意。运行后核对来源题数/分值与汇总，保留未分类项，不能只看总计100%。关联的题目记录、profile及统计在课程外准备，以共同助手的analyst批次提交；成功后read-set回读并交付同一版本，不逐个覆盖后宣称整份分析已发布。
+`scripts/summarize_exam.py`只对已经理解并标注的JSON计数，不读取PDF、不自动判断题意。运行后核对来源题数/分值与汇总，保留未分类项，不能只看总计100%。关联的题目记录、profile、统计及简报在课程外准备，以共同助手的analyst批次提交；成功后read-set回读并交付同一版本，不逐个覆盖后宣称整份分析已发布。
 
-输出向规划提供证据与建议重点，向题目模块提供原题锚点和题型要求。没有新的资料或范围变化时复用已有有效分析，不每课重做。
+简报概括实际已分析范围、主要知识点、题型/命令动词、考查能力、带来源范围的分值/频次线索及缺口；不复制逐题完整分析或未展示的答案，不把部分卷写成全卷结论。详细标注、能力链、统计口径和审查过程留在本课程内部exam/工作记录，不写入全局Skill安装目录。无新分析时复用有效简报，来源变化时和对应内部结果一起更新；尚未生成就明示，不用空报告占位。
+
+输出向规划提供内部证据、建议重点及简报实际保存路径，由规划刷新课程产出索引并给学生简报链接；向题目模块提供原题锚点和题型要求。没有新的资料或范围变化时复用已有有效分析，不每课重做。
 
 按[考试依据交接](../study-planner/references/exam-handoff.md)返回可观察风格/偏好、带范围的分值要求与能力链、分析版本及未覆盖页。建议不是已执行计划；规划在接续时决定补讲和练习，并核对实际落实。
+
+同一exam反馈可供study-notes采用，保留可定位的重点清单：保留本主题state/define/explain要求、来源页/小问、官方或推定表述区别和适用版本。只交付已有证据，不为笔记重新分析全卷或写另一套计划；缺少定义题依据就明确缺项，由笔记使用课程定义/参考表达。
 
 供教学/出题复用时，在 `exam/profile.md` 保留少量有代表性的能力链与题设边界：来源小问、需要选择/解释/推导什么、前后依赖及允许使用的结果。它们是原卷要求的例证，频次汇总不能替代这些信息。已有分析已包含时直接沿用。

@@ -1,6 +1,6 @@
 ---
 name: course-study
-description: Teach coherent course lessons, explain concepts, and repair local prerequisite gaps using learner-provided materials. Use for teaching or temporary course questions; study-planner coordinates the overall study route and practice schedule.
+description: Teach coherent lessons and repair prerequisite gaps in sustained systematic study using a course-material set. Use within an established course or when explicitly invoked, including course-local questions; do not implicitly start this suite for lab workflows or isolated tasks. study-planner coordinates the route and practice.
 ---
 
 # 课程教师
@@ -9,13 +9,15 @@ description: Teach coherent course lessons, explain concepts, and repair local p
 
 ## 进入当前课堂
 
+自动使用前按[共同记录约定](../study-planner/references/coordination.md)确认这是依成套资料开展的持续系统课程，或已有对应课程记录；整学期资料无需一次上传。实验操作、实验报告、风险评估、实验数据与零散问题不自动启动本组。用户明确点名本Skill时完成指定讲解，不由此启动其余模块或自建课程。
+
 先依据用户、对话和记录确认课程及入口。工作目录名不是课程身份；已知基础和偏好直接沿用，用户要先开讲时不设置入学测试。
 
 只沿用对本次仍有效的偏好与个人教学策略，当前要求优先；临时要求不永久改变讲法。收到讲法反馈或需要重新判断偏好时读[偏好更新与教学适配](../study-planner/references/preferences.md)。教师可调整当前解释，长期偏好与策略由主对话规划统一维护；临时入口仅将实际要求与观察写入side-notes。
 
-持续课程读取 `course.md`、`current.md` 和当前有效计划，再读本课相关笔记与原始材料。主对话说“继续学习”时，按 `study-planner` 选定的任务授课。临时答疑直接解释指定问题，保留主课接续位置。新建课程或处理新增资料时读 [材料分类](references/materials.md)。
+持续课程读取 `course.md`、`current.md` 和当前有效计划，再读本课相关笔记与原始材料。主对话说“继续学习”时，按 `study-planner` 选定的任务授课。已建立课程内的临时答疑直接解释指定问题，保留主课接续位置。首次接入课程或处理新增资料时读[材料分类](references/materials.md)，按[课程文件入口](../study-planner/references/course-files.md)归档并更新章节索引；讲授使用语音识别字幕时读[课堂字幕](references/transcripts.md)。
 
-首次协作、换对话或写记录时，读取四Skill共同的[记录与交接约定](../study-planner/references/coordination.md)。若规划Skill不可用，仍完成当前明确的讲解并保存最少充分笔记，说明计划尚未接续；不虚构已调用另一个Skill或后台同步。
+首次协作、换对话或写记录时，读取五Skill共同的[记录与交接约定](../study-planner/references/coordination.md)。若规划Skill不可用，仍完成当前明确的讲解并保存最少充分笔记，说明计划尚未接续；不虚构已调用另一个Skill或后台同步。
 
 ## 准备与完整性
 
@@ -23,7 +25,7 @@ description: Teach coherent course lessons, explain concepts, and repair local p
 
 发现材料疑点或看不了关键原页时，读[核对与降级规则](references/source-checks.md)；先分清抽取、呈现和内容，不把疑点保存成已确认错误。
 
-为本课核对：实质概念及关系、条件与符号、关键推理/推导、必要图示、示范应用。在现有笔记中把重要来源页/小节对应到实质讲解位置，说明已展开、合并、留待后续或尚不确定；已有对应足够清楚时不重复制作表格。不能用标题列表证明覆盖完整。章节与课次按内容划分，可以一章分多课或跨章贯通。
+为本课核对：实质概念及关系、条件与符号、关键推理/推导、必要图示、示范应用。准备当前关系时按[教学图像：选择、生成与核验](references/teaching-visuals.md)判断哪些关系需要图像，在首次借图理解的位置提供并核验；函数变化、几何/约束、路径和抽象关系不能只剩文字公式后让学生自行想象。在现有笔记中把重要来源页/小节对应到实质讲解位置，说明已展开、合并、留待后续或尚不确定；已有对应足够清楚时不重复制作表格。不能用标题列表证明覆盖完整。章节与课次按内容划分，可以一章分多课或跨章贯通。
 
 基础改变起点、步幅、例子和先修补充，正常学习的最终深度不因此降低。考试频率不能替代课程要求；规划中的暂缓只适用于确实时间不足的冲刺，保留最低必要推理与补齐安排。
 
@@ -43,8 +45,10 @@ description: Teach coherent course lessons, explain concepts, and repair local p
 
 有意义的讲解段完成、答题反馈或暂停时保存可用于复习的课堂笔记：实质概念、条件、关键步骤、例子、来源、未解项和接续理由。主课堂更新课堂检查点；临时入口只写独立答疑记录。
 
-区分自述、未检验、提示后完成、独立完成与隔时表现。讲过不等于掌握，体验认可也不是作答证据。只记录可核对的决定理由，不记录内部思维过程。写入成功才说已保存；失败时给出可复制的检查点。
+一课或有意义的阶段保存后，将稳定课ID、已讲范围、原记录路径/SHA和来源交给study-notes整理课后笔记；它从现有反馈取内容，不要求学生新增输入。课堂原记录保留实质推导及理由，并在现有反馈中标出重要主题、关键假设/跳步与来源位置；已用教学图保留图的作用、依据/参数和实际核验范围，供笔记复用与核对；不另建反馈库。面向阅读的网页由笔记模块编排；计划/断点仍由原维护者更新。临时答疑只保存side-notes，由规划采用后进入笔记；不直接触发另一份主课笔记。
+
+区分自述、未检验、提示后完成、独立完成与隔时表现。讲过不等于掌握，体验认可也不是作答证据。只记录可核对的决定理由，不记录内部思维过程。写入成功才说已保存；失败时给出可复制的检查点。返回实际课堂记录与笔记路径，由规划按[课程文件入口](../study-planner/references/course-files.md)刷新面向学生的产出索引。
 
 有可复用的教学经验时，在同一课堂笔记留下采用的讲法、具体反馈/问题、实际帮助和观察结果，交给规划按[个人经验规则](../study-planner/references/teaching-experience.md)接续。没有后续作答就不补写教学成功；不从个人复盘自动改写通用Skill。
 
-发送前核对推理、条件、符号、单位、数值与原页。含数学的已保存课堂笔记或回复草稿运行 `python3 <course-study>/scripts/check_math.py <文件>`，处理发现的转义/定界问题；警告要按上下文判断，不自动替换原式。此检查不验证推导或实际显示；复杂排版仍查看交付结果。工具不可用时逐式读回。图示或文件在有教学价值时加入，工具失败时保留完整的对话讲解。学生界面呈现学习内容，维护协议留在文件中。
+发送前核对推理、条件、符号、单位、数值与原页。含数学的已保存课堂笔记或回复草稿运行 `python3 <course-study>/scripts/check_math.py <文件>`，处理发现的转义/定界问题；警告要按上下文判断，不自动替换原式。此检查不验证推导或实际显示；复杂排版仍查看交付结果。工具不可用时逐式读回。教学图像须按共享规则核对来源关系并实际查看交付画面；工具失败保留完整讲解并标明待补图，不将未核验图称为已交付。学生界面呈现学习内容，维护协议留在文件中。

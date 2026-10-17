@@ -86,7 +86,7 @@ def check(source):
             # A recorded, line-leading suite invocation is command text.
             line_start = text.rfind('\n', 0, token.start()) + 1
             if value == '$' and not text[line_start:token.start()].strip() and re.match(
-                    r'(?:study-planner|course-study|exam-analysis|practice-builder)(?=\s|$)', rest):
+                    r'(?:study-planner|course-study|exam-analysis|practice-builder|study-notes)(?=\s|$)', rest):
                 continue
             # A lone price such as $20 is prose, not an unfinished math expression.
             if value == '$' and is_price(text[line_start:token.start()], rest):

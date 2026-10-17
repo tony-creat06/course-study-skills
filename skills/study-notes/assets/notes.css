@@ -1,0 +1,141 @@
+:root {
+  color-scheme: light;
+  --ink: #20302d;
+  --muted: #53645b;
+  --line: #d4ddd4;
+  --accent: #246752;
+  --paper: #f7f8f4;
+  --surface: #edf2eb;
+  --body-size: 1.0625rem;
+  --small-size: .875rem;
+  --read-measure: 72ch;
+  --section-gap: 2.75rem;
+}
+* {box-sizing: border-box}
+[hidden] {display: none !important}
+html {scroll-padding-top: 1.5rem}
+body {margin: 0; background: var(--paper); color: var(--ink); font: var(--body-size)/1.8 system-ui,-apple-system,"PingFang SC",sans-serif}
+::selection {background: #c5dfcf; color: #122b20}
+.notebook {max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 5rem}
+.note-header {margin: 0 0 2rem; max-width: 940px}
+h1 {font-size: 2rem; font-weight: 700; line-height: 1.35; margin: 0 0 .875rem; text-wrap: balance}
+h2 {font-size: 1.375rem; line-height: 1.4; margin: 0; text-wrap: balance}
+h3 {font-size: 1.125rem; line-height: 1.55; margin: 1.75rem 0 .625rem}
+p {margin: .625rem 0}
+.scope,.source,.related,.command,footer {font-size: var(--small-size); color: var(--muted); overflow-wrap: anywhere}
+.intro {max-width: var(--read-measure); margin-top: 1.25rem}
+.controls {display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; margin-top: 1.25rem}
+.mode-switch,.document-actions {display: flex; gap: .375rem; flex-wrap: wrap}
+.find-tools {margin: .75rem 0 0; max-width: var(--read-measure)}
+.find-tools > summary {font-size: var(--small-size); font-weight: 600; cursor: pointer; min-height: 44px; padding: .5rem 0; color: var(--accent)}
+.document-actions {margin-top: .75rem}
+button {font: inherit; font-size: var(--small-size); line-height: 1.35; min-height: 44px; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 6px; padding: .5rem .875rem; cursor: pointer}
+button:hover {background: var(--surface)}
+button[aria-pressed="true"] {background: var(--accent); color: white; border-color: var(--accent)}
+button:disabled {cursor: default; background: var(--surface); color: var(--muted)}
+a {color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px}
+a:hover {text-decoration-thickness: 2px}
+a:focus-visible,summary:focus-visible,button:focus-visible,input:focus-visible {outline: 3px solid #5b9278; outline-offset: 3px}
+.search-row {max-width: var(--read-measure); margin-top: 1rem}
+.search-row label {display: block; font-size: var(--small-size); font-weight: 600; margin-bottom: .375rem}
+input[type="search"] {font: inherit; font-size: 1rem; width: 100%; min-height: 44px; padding: .625rem .75rem; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 6px; caret-color: var(--accent)}
+input::placeholder {color: var(--muted)}
+.search-status {font-size: var(--small-size); color: var(--muted); margin: .375rem 0 0}
+.search-status:empty {display: none}
+.layout {display: grid; grid-template-columns: 190px minmax(0,1fr); gap: 2.5rem; align-items: start}
+.sidebar {position: sticky; top: 1.5rem; max-height: calc(100vh - 3rem); overflow: auto; scrollbar-width: thin; scrollbar-color: #a7b7a9 var(--paper); font-size: var(--small-size)}
+.sidebar summary {font-weight: 650; cursor: pointer; min-height: 44px; padding: .5rem 0}
+.sidebar nav ul {list-style: none; padding: 0; margin: .625rem 0 1.25rem}
+.sidebar li {margin: .625rem 0; line-height: 1.6}
+.sidebar a {text-decoration: none; display: inline-block; padding: .25rem 0}
+.sidebar a:hover {text-decoration: underline}
+.glossary h3 {font-size: var(--small-size); margin: 1.5rem 0 .5rem}
+.glossary ul {padding: 0; list-style: none; margin: 0}
+.glossary small {display: block; color: var(--muted); font-size: .8125rem}
+.content {max-width: var(--read-measure); min-width: 0}
+article.topic {margin: 0 0 var(--section-gap); padding: 0 0 2rem; border-bottom: 1px solid var(--line); scroll-margin-top: 1.5rem}
+.topic-heading {display: flex; flex-wrap: wrap; align-items: baseline; gap: .375rem 1rem; margin-bottom: 1rem}
+.kind {color: var(--muted); font-size: .8125rem}
+.overview {margin-bottom: 1rem}
+.recall {margin: 1.25rem 0; padding: .875rem 1rem; background: var(--surface)}
+.recall > p {margin: 0; font-size: var(--small-size); font-weight: 600}
+.recall ul {padding-left: 1.25rem; margin: .5rem 0 0}
+.recall li {margin: .25rem 0}
+.recall-goal {margin: .75rem 0 1rem}
+.hint-set {margin: 1rem 0}
+.hint-panel {padding: .625rem 0; border-bottom: 1px solid var(--line)}
+.hint-panel h3 {font-size: 1rem; margin: .375rem 0}
+.hint-reveal {margin-top: .75rem}
+details.explanation {border-top: 1px solid var(--line); padding-top: .375rem}
+details.explanation > summary {color: var(--accent); font-weight: 600; cursor: pointer; min-height: 44px; padding: .5rem 0; font-size: 1rem}
+.detail {padding-top: .375rem}
+.detail > :first-child {margin-top: .375rem}
+.definition-sheet {margin: .5rem 0 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line)}
+.definition-sheet > h3 {margin-top: .375rem}
+.definition-sheet dl {display: grid; grid-template-columns: 100px minmax(0,1fr); gap: .75rem 1rem; margin: 1rem 0}
+.definition-sheet dt {font-size: var(--small-size); font-weight: 600; color: var(--muted)}
+.definition-sheet dd {margin: 0; min-width: 0}
+.definition-sheet dd > :first-child {margin-top: 0}
+.definition-sheet dd > :last-child {margin-bottom: 0}
+.key-steps {padding-left: 1.5rem; margin: .75rem 0 1.5rem}
+.key-steps > li {padding-left: .25rem; margin: 1.25rem 0}
+.step-title {font-weight: 650; margin-bottom: .5rem}
+.step-reason,.step-condition {margin-top: .75rem}
+.step-reason > strong,.step-condition > strong {font-size: var(--small-size); color: var(--muted)}
+.equation {margin: 1.25rem 0; overflow-x: auto; overflow-y: hidden; padding: .5rem 0}
+math {font-size: 1.12em} math[display="block"] {margin: 0 auto}
+img {display: block; max-width: 100%; height: auto; margin: 1.25rem auto}
+figure {margin: 1.5rem 0}
+figcaption {font-size: var(--small-size); color: var(--muted); margin-top: .5rem}
+table {border-collapse: collapse; max-width: 100%; display: block; overflow-x: auto; margin: 1.25rem 0}
+th,td {padding: .5rem .75rem; border: 1px solid var(--line); text-align: left}
+blockquote {margin: 1rem 0; padding: .5rem 1rem; background: var(--surface)}
+pre {overflow: auto; padding: 1rem; background: var(--surface)}
+.pending {padding-top: 1rem; border-top: 1px solid var(--line); font-size: var(--small-size)}
+footer {margin-top: 2rem}
+body[data-mode="reading"] .recall-goal {display: none}
+body[data-mode="recall"] .overview,body[data-mode="recall"] .intro {display: none}
+@media(max-width: 860px) {
+  .layout {grid-template-columns: minmax(0,1fr); gap: 1.5rem}
+  .sidebar {position: static; max-height: none; border-block: 1px solid var(--line)}
+  .content {max-width: 100%}
+}
+@media(max-width: 600px) {
+  body {font-size: 1rem}
+  .notebook {padding: 1.5rem 1rem 3rem}
+  .note-header {margin-bottom: 1.25rem}
+  h1 {font-size: 1.625rem}
+  h2 {font-size: 1.25rem}
+  h3 {font-size: 1.0625rem}
+  .controls {gap: .625rem; margin-top: 1rem}
+  .document-actions {gap: .25rem}
+  .document-actions button {padding-inline: .625rem}
+  .definition-sheet dl {grid-template-columns: minmax(0,1fr); gap: .375rem}
+  .definition-sheet dt:not(:first-child) {margin-top: .75rem}
+  .recall {padding: .75rem .875rem}
+  .recall ul {padding-left: 1.125rem}
+}
+@page {size: A4; margin: 18mm}
+@media print {
+  body {background: white; color: #17211b; font-size: 11pt; line-height: 1.7}
+  .notebook {max-width: none; margin: 0; padding: 0}
+  .layout {display: block}
+  .content {max-width: none}
+  .controls,.find-tools,.sidebar,.hint-set,.recall-goal {display: none !important}
+  .overview,.intro {display: block !important}
+  article.topic {margin-bottom: 1.5rem; padding-bottom: 1rem; break-inside: auto}
+  article.topic-concept,article.topic-term,article.topic-exam {break-inside: avoid}
+  .topic-heading {break-inside: avoid; break-after: avoid}
+  h2,h3,.step-title {break-after: avoid}
+  details.explanation > summary {display: none}
+  details.explanation {border: 0; padding: 0}
+  details::details-content {content-visibility: visible}
+  .detail {padding: 0}
+  .recall {background: transparent; padding: .5rem 0}
+  .equation {overflow: visible; break-inside: avoid}
+  .definition-sheet {break-inside: avoid}
+  .source {font-size: 9pt; break-before: avoid; break-inside: avoid}
+  table {display: table; width: 100%; font-size: .9em}
+  img {max-height: 220mm; object-fit: contain}
+  a {color: inherit}
+}

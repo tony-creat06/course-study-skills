@@ -14,14 +14,14 @@
 
 旧JSON的`attempt`仍可读取，不批量改旧课程：独立正确/需订正、partial、shown_solution沿用；hinted只显示“本题使用过提示（结果见复盘）”，不再自动推断完成。新记录使用evidence；同一item不能同时写两个版本的字段。
 
-HTML片段使用普通段落、列表、表格、代码和原生MathML。公式写成`<math><mfrac>...</mfrac></math>`等正常排版，不把LaTeX源码裸露给读者；生成复杂MathML后对照原解析逐式核对。片段采用良构写法：闭合标签、`<br/>`、`&amp;`，特殊符号可直接使用Unicode。片段必须有完整题干和完整解答，不能只剩最终答案。必要图像用相对于JSON文件的PNG/JPEG/WebP路径，脚本会嵌入文件。
+HTML片段使用普通段落、列表、表格、代码和原生MathML。公式写成`<math><mfrac>...</mfrac></math>`等正常排版，不把LaTeX源码裸露给读者；生成复杂MathML后对照原解析逐式核对。片段采用良构写法：闭合标签、`<br/>`、`&amp;`，特殊符号可直接使用Unicode。片段必须有完整题干和完整解答，不能只剩最终答案。必要图像支持相对于JSON文件的PNG/JPEG/WebP路径，脚本会嵌入HTML；正式保存的共享JSON也必须自包含：把片段中本地图片的src转换成经核验的`data:image/png;base64,...`、JPEG或WebP data URL，再保存JSON。可用`<study-planner>/scripts/passive_images.py`中的`image_data(src, JSON所在目录)`转换，它同时校验格式、内容类型与20 MB大小上限。只支持规范base64的这三种被动图像，不接受SVG、远程图片、绝对路径或越出输入目录的路径。
 
 ```text
 python3 <study-planner>/scripts/course_records.py read --root <课程目录> --path reviews/<单元>.html
 python3 <study-planner>/scripts/render_review.py --input <已做题.json> --root <课程目录> --path reviews/<单元>.html --expected <上一步sha256或absent>
 ```
 
-脚本只负责结构、嵌入资源和静态排版，不验证知识真假、来源真实性或学生掌握。它拒绝尚未尝试且未展示解析的未来题、重复题ID、缺失解析和外部资源；输入中仍可保存文字来源链接。共享输入JSON通过记录脚本保存；HTML输出使用上面的版本保护模式，锁/备份/写后回读适用。课程外临时预览可用--output，不把它当作共享输出保存完成。生成后实际用浏览器查看公式、表格/图示与窄屏，核对题目完整性和个人复盘。若数学排版有问题，修复输出，不把.html后缀当作已排版证据。
+脚本只负责结构、嵌入资源和静态排版，不验证知识真假、来源真实性或学生掌握。它拒绝尚未尝试且未展示解析的未来题、重复题ID、缺失解析和外部资源；输入中仍可保存文字来源链接。共享输入JSON通过记录脚本保存到`reviews/<单元>.json`；清理临时图片前，从这份正式JSON重建并核对图像完整性，不能只验证临时预览。HTML输出使用上面的版本保护模式，锁/备份/写后回读适用。课程外临时预览可用--output，不把它当作共享输出保存完成。生成后实际用浏览器查看公式、表格/图示与窄屏，核对题目完整性和个人复盘。若数学排版有问题，修复输出，不把.html后缀当作已排版证据。
 
 正常讲课保持对话直接呈现；这里的HTML是课后题解文档。实现依据：MDN Authoring MathML；离线HTML不依赖CDN或后台服务。
 

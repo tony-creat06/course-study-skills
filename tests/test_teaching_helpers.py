@@ -140,6 +140,48 @@ class ReviewEvidenceTests(unittest.TestCase):
             self.assertEqual(destination.read_text(), 'Manual annotation must survive')
 
 
+class ReviewCliPathTests(unittest.TestCase):
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.base = Path(self.folder.name)
+        self.source = self.base / 'draft.json'
+        self.source.write_text(json.dumps({'course': 'Synthetic', 'unit': 'Alias regression', 'items': [{'id': 'q1', 'title': 'Synthetic practice', 'source': 'Test fixture', 'question_html': '<p>State the result.</p>', 'solution_html': '<p>Synthetic solution.</p>', 'personal_review': 'Synthetic fixture only.', 'evidence': {'assistance': 'hint', 'outcome': 'partial'}}]}), encoding='utf-8')
+
+    def run_cli(self, destination):
+        return subprocess.run([sys.executable, '-B', str(ROOT / 'skills/study-planner/scripts/render_review.py'), '--input', str(self.source),
+                               '--output', str(destination)], text=True, capture_output=True)
+
+    def assert_alias_rejected(self, destination):
+        before = self.source.read_bytes(), self.source.stat().st_mtime_ns
+        alias_before = destination.read_bytes(), destination.stat().st_mtime_ns
+        result = self.run_cli(destination)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn('Output must not overwrite', result.stderr)
+        self.assertEqual((self.source.read_bytes(), self.source.stat().st_mtime_ns), before)
+        self.assertEqual((destination.read_bytes(), destination.stat().st_mtime_ns), alias_before)
+        self.assertTrue(self.source.samefile(destination))
+
+    def test_cli_rejects_hard_link_alias(self):
+        alias = self.base / 'hard-link.json'
+        alias.hardlink_to(self.source)
+        self.assert_alias_rejected(alias)
+
+    def test_cli_rejects_case_alias_on_case_insensitive_filesystem(self):
+        alias = self.base / 'Draft.json'
+        if not alias.exists() or not self.source.samefile(alias):
+            self.skipTest('Case-insensitive filesystem required')
+        self.assert_alias_rejected(alias)
+
+    def test_cli_renders_distinct_output_and_preserves_input(self):
+        before = self.source.read_bytes(), self.source.stat().st_mtime_ns
+        destination = self.base / 'preview.html'
+        result = self.run_cli(destination)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(destination.read_text(encoding='utf-8').startswith('<!doctype html>'))
+        self.assertEqual((self.source.read_bytes(), self.source.stat().st_mtime_ns), before)
+
+
 class MathematicalDeliveryTests(unittest.TestCase):
     def test_numeric_unclosed_math_is_not_mistaken_for_price(self):
         for example in ('$2x+1', '$2 x+1', '$2^2', '$2=3', '$2/3'):
@@ -182,7 +224,7 @@ class MathematicalDeliveryTests(unittest.TestCase):
         self.assertEqual(issues[0]['line'], 4)
 
     def test_recorded_skill_requests_do_not_open_math(self):
-        for name in ('study-planner', 'course-study', 'exam-analysis', 'practice-builder'):
+        for name in ('study-planner', 'course-study', 'exam-analysis', 'practice-builder', 'study-notes'):
             source = '$' + name + ' Continue studying.\n' + r'\(x^2\)'
             with self.subTest(name=name):
                 self.assertEqual(math.check(source), [])

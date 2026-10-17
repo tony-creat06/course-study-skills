@@ -1,8 +1,8 @@
 # Course Study Skills
 
-Four coordinated [Codex](https://developers.openai.com/codex/skills) skills for course self-study and exam preparation.
+Five coordinated [Codex](https://developers.openai.com/codex/skills) skills for course self-study and exam preparation.
 
-The bundle is designed for learning from lecture notes, slides, handwritten notes, prescribed texts, teacher exercises, past papers, marking schemes, and revision materials. It keeps one course plan and separates teaching, evidence-based exam analysis, and question design so that these responsibilities do not conflict.
+The bundle is for sustained, systematic course teaching from a usable set of lecture notes, slides, classroom transcripts, handwritten notes, prescribed texts, teacher exercises, past papers, marking schemes, and revision materials. Uploading a complete term in advance is not required. Lab procedures, apparatus operation, risk assessments, experimental data, lab reports and isolated questions do not implicitly start the suite. Explicit component invocation remains available. It keeps one course plan and separates teaching, evidence-based exam analysis, and question design so that these responsibilities do not conflict.
 
 ## Included skills
 
@@ -12,28 +12,31 @@ The bundle is designed for learning from lecture notes, slides, handwritten note
 | `course-study` | Coherent university-style lessons, local prerequisite repair, and temporary concept or question help. |
 | `exam-analysis` | Traceable analysis of course requirements, past papers, marking schemes, question types, and topic statistics. |
 | `practice-builder` | Teacher- and past-paper-grounded exercises, variants, complete solutions, and checking notes. |
+| `study-notes` | Bilingual concepts, terms, exam expressions and derivations from the other modules' saved feedback; complete offline chapter notes, course-end synthesis and optional PDF export. |
 
-`study-planner` is the normal entry point. The other three skills can also be invoked directly for a focused task.
+`study-planner` is the normal entry point. The other four skills can also be invoked directly for a focused task.
 
 ## Install
 
-Use Codex on macOS or Linux with Python 3.11 or newer. The helpers use Python's standard library and POSIX file locking; no Obsidian plugin, API key, or local project-specific files are required. Codex still needs permission to read your materials and write your chosen course-record directory.
+Version **v0.3.0** contains all five skills. Use Codex on macOS or Linux with Python 3.11 or newer. The helpers use Python's standard library and POSIX file locking; no Obsidian plugin, API key, or project-specific development files are required. Codex needs permission to read your materials and write the course-record directory you choose.
 
-Install all four folders together: their documentation and helpers use relative paths to the shared planning skill. For a fresh installation:
+Install all five folders together in the same skills directory: they use relative paths to shared helpers. For a fresh user-wide installation, use Codex's documented `~/.agents/skills/` directory:
 
 ```bash
 git clone https://github.com/tony-creat06/course-study-skills.git
 cd course-study-skills
-git checkout v0.2.8
-mkdir -p ~/.codex/skills
-cp -R skills/study-planner skills/course-study skills/exam-analysis skills/practice-builder ~/.codex/skills/
+git checkout v0.3.0
+mkdir -p ~/.agents/skills
+cp -R skills/study-planner skills/course-study skills/exam-analysis skills/practice-builder skills/study-notes ~/.agents/skills/
 ```
 
-Alternatively, download `course-study-skills-v0.2.8.zip` from the [v0.2.8 release](https://github.com/tony-creat06/course-study-skills/releases/tag/v0.2.8), extract it, and copy all four folders inside `skills/` to `~/.codex/skills/`. GitHub's automatic source-code archives add a repository root folder; the uploaded bundle starts directly with `skills/`, `tests/`, `README.md` and `LICENSE`.
+Alternatively, download `course-study-skills-v0.3.0.zip` from the [v0.3.0 release](https://github.com/tony-creat06/course-study-skills/releases/tag/v0.3.0), verify it against the accompanying SHA256 file, extract it, and copy all five folders inside `skills/` to the same destination. The uploaded bundle starts directly with `skills/`, `tests/`, `README.md` and `LICENSE`; GitHub's automatic source archives add a repository root folder.
 
-Codex's built-in Skill Installer can also install all four paths from this repository at ref `v0.2.8`: `skills/study-planner`, `skills/course-study`, `skills/exam-analysis`, and `skills/practice-builder`. The new skills are available on the next turn; restart Codex if they do not appear.
+Codex's built-in Skill Installer can also install all five repository paths at ref `v0.3.0`: `skills/study-planner`, `skills/course-study`, `skills/exam-analysis`, `skills/practice-builder`, and `skills/study-notes`. Select one common destination for the five folders.
 
-If a destination skill already exists, back up all four folders and preserve any personal edits before replacing them together. Finish or abort any pending course-record bundle using the current writer first. Keep personal course records in their own directory; upgrading the skills does not require changing them. An already downloaded older ZIP stays at its old version; download this release again to upgrade.
+For an upgrade, use the directory from which your existing skills are loaded, including `~/.codex/skills/` on installations already using that location. Do not create a second copy with the same names in another searched directory. Back up all five folders, preserve personal edits, and replace the bundle together. Finish or abort pending course-record bundles using the current writer before replacement. Keep course materials and personal learning records outside the installed skills; upgrading does not require migrating those records. Older downloaded ZIPs retain their original version.
+
+Codex detects skill updates automatically; if the changes do not appear, restart it. See the [official skills and loading instructions](https://learn.chatgpt.com/docs/build-skills). The historical [v0.2.8 release](https://github.com/tony-creat06/course-study-skills/releases/tag/v0.2.8) remains available as the four-skill version.
 
 ## Start studying
 
@@ -55,7 +58,7 @@ The skills treat learner-provided materials as the primary source. Recent two to
 
 This repository contains only the reusable skill instructions and their small standard-library Python helpers. It does not contain lecture notes, past papers, answers, personal progress, student work, or other course materials.
 
-This is version 0.2.8. Related exam records, profiles and statistics are now saved as a recoverable `analyst` bundle. The planner reads them with `read-set`, which holds the writer's lock across all requested files, then passes the same evidence snapshot to teaching and question design. Interrupted publication blocks shared reads until recovery. Analysts may recover their own exam bundle; only the planner's `main` role can change the shared plan or checkpoint. The current writer also recovers older v1 main journals.
+Version 0.3.0 adds complete chapter/course notes and the material-intake workflow to the v0.2.8 evidence baseline. Related exam records, profiles and statistics are saved as a recoverable `analyst` bundle. The planner reads them with `read-set`, which holds the writer's lock across all requested files, then passes the same evidence snapshot to teaching and question design. Interrupted publication blocks shared reads until recovery. Analysts may recover their own exam bundle; only the planner's `main` role can change the shared plan or checkpoint. The current writer also recovers older v1 main journals.
 
 The planner compares source-backed question styles, ability chains and observed mark allocations with existing teaching and practice, then records specific supplements and their actual coverage. History, partial-paper marks and personal priorities remain distinct. Summary fields preserve joint allocations and source parts; missing style labels stay unclassified. When the exam is near and time is insufficient, the planner changes the same plan, prioritizes the necessary teaching and practice, and records deferred depth for later completion. Analysis supplies evidence rather than maintaining a competing schedule.
 
@@ -66,6 +69,26 @@ The personal teaching-experience loop remains lightweight: reuse relevant strate
 Personalization uses local course records, not automatic rewriting of the shared skill source. Preferences can change or be withdrawn. Cross-course reuse requires the same learner and explicitly general preferences from designated records; personal records are not published with this bundle.
 
 Helper regressions and bounded simulated use check software and workflow behavior. They do not establish superior learning, long-term retention, or exam results compared with direct-file tutoring. Important course-specific content still needs checking against the teaching materials.
+
+## Materials and course files
+
+Each course has a declared material archive and a separate record/output root. Recommended intake is `<project>/inputs/course-materials/<course>/inbox/`: drop new files there, or provide them in chat. The next course resumption scans the intake, classified folders and declared original source roots for added, modified, missing, moved and duplicate content. There is no background watcher. Physical folders separate syllabus, lectures, transcripts, exercises, solutions, exams, revision, textbooks and supplements; a source/chapter index relates pages and timestamps without duplicating files per chapter. Classification follows inspected content, not filenames alone.
+
+`study-planner/scripts/course_files.py` provides version-checked `init`, `scan`, `import` and `index` commands; see `skills/study-planner/references/course-files.md` for the exact internal inputs and outputs. External original files remain unchanged. Managed intake files leave the inbox only after archive and registry verification; same-name new versions retain separate bytes. Source changes trigger review of related evidence, not erasure of prior learner records or automatic rewriting of every analysis.
+
+Raw ASR transcripts retain their words and timestamps. Teaching may interpret likely recognition errors using context and corresponding notes; ambiguous terminology, numbers, negations or equations retain the original wording and location in a separate interpretation record.
+
+`index.html` and `index.md` are the visible course entry points. Notes stay in `notes/`, new question prompts in `questions/prompts/`, author solutions in `questions/solutions/`, actual attempts in `practice/`, and completed/shown-solution reviews in `reviews/`. Exam/question analysis also publishes a concise learner report at `exam/brief.md`, covering actual source scope, topics, styles, abilities and gaps. Detailed annotations, profiles and statistics stay in the course workspace; the navigation links only the brief. The analyst publishes it with the associated evidence as one recoverable batch. Uncreated outputs are labelled as such. The default index excludes unreleased author solutions and old combined records with unknown answer exposure. Existing course paths and historical work remain intact; the first eligible resumption adopts the file workflow without replaying lessons or inventing learner answers.
+
+## Chapter and course notes
+
+After each saved lesson, the planner hands existing feedback to `study-notes` to accumulate the corresponding chapter. A standalone lesson note is optional. The planner confirms when a chapter's taught scope is complete; partial chapters state their actual scope. After the course is completed, a course note reorganizes the chapters using the learning process and their connections. Students do not fill in another input form, and all four providers need not run again.
+
+The note module writes only `notes/`, with its own `notes` role; the original roles retain ownership of plans, checkpoints, teaching, exams, questions and learner evidence. The renderer checks feedback and destination versions under the shared lock, preserves backups and refuses stale feedback/manual-edit overwrites. It does not publish hidden future solutions or infer mastery from reading.
+
+New internal drafts use schema version 3: connected lecture sections with the complete core body visible by default, plus separate concise and optional recall views. Concepts, bilingual terminology, examples, English reference expressions and derivation steps belong in the narrative where they explain the subject. Only supplementary material is folded. Source-topic coverage maps locate input topics in the output; a valid map alone does not prove completeness or mathematical correctness. Versions 1 and 2 remain readable without migrating old records.
+
+Each HTML file is self-contained: native MathML, embedded images, inline styles and local search. Desktop reading is primary, with a readable text measure, a persistent chapter index and local scrolling for wide equations. Optional bilingual term/symbol indexes and numbered key equations link back to the full explanations. Concise views retain the starting relationships, method choices, conditions and uses rather than extracting only final results. Basic narrow-screen support is auxiliary. Print/Save PDF includes the full body and supplements, then restores the reading state; annotated PDF snapshots are not overwritten. File/version tests do not establish content accuracy or learning gains.
 
 ## Development checks
 

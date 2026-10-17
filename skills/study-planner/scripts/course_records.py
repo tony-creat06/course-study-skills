@@ -15,10 +15,11 @@ import time
 import math
 import uuid
 
-MAIN_FILES = {'course.md', 'current.md', 'study-plan.md', 'materials.md', 'course-map.md'}
-ROLE_FORMATS = {'main': {'lessons': {'.md'}, 'practice': {'.md'}, 'reviews': {'.json', '.html'}},
+MAIN_FILES = {'course.md', 'current.md', 'study-plan.md', 'materials.md', 'course-map.md', 'materials.json', 'materials-index.md', 'index.md', 'index.html'}
+ROLE_FORMATS = {'main': {'lessons': {'.md'}, 'practice': {'.md'}, 'reviews': {'.json', '.html'}, 'transcripts': {'.md', '.json'}},
                 'aside': {'side-notes': {'.md'}}, 'analyst': {'exam': {'.md', '.json'}},
-                'questions': {'questions': {'.md', '.json'}}}
+                'questions': {'questions': {'.md', '.json'}},
+                'notes': {'notes': {'.html', '.json'}}}
 ROLE_DIRS = {role: set(directories) for role, directories in ROLE_FORMATS.items()}
 PENDING = '.course-records.pending.json'
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "学习笔记"
+  short_description: "随学习整理完整章节lecture notes，电脑阅读优先，提供精简与回忆视图。"
+  default_prompt: "请用 $study-notes 接收现有课程模块反馈，更新本章完整连贯的离线网页笔记；若规划已确认课程完成，再整理全课程笔记，并返回保存位置。"

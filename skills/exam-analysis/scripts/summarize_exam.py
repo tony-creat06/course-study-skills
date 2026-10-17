@@ -186,7 +186,7 @@ def main():
                 raise ValueError('Use --output for scratch output, or the full protected-output options')
             destination = Path(args.output)
         source = Path(args.input)
-        if source.resolve() == destination.resolve():
+        if source.resolve() == destination.resolve() or (destination.exists() and source.samefile(destination)):
             raise ValueError('Output must not overwrite the source records')
         result = summarize(json.loads(source.read_text(encoding='utf-8')))
         content = json.dumps(result, ensure_ascii=False, indent=2) + '\n'

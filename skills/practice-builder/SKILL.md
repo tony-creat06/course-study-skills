@@ -1,6 +1,6 @@
 ---
 name: practice-builder
-description: Select or create course-grounded practice questions, variants, complete worked solutions, and reference marking points using real exam evidence. Use for question and solution design or checking; study-planner handles practice delivery, learner feedback, and scheduling.
+description: Select or create course-grounded practice questions, variants, worked solutions and reference marking points. Use within an established systematic course or when explicitly invoked; isolated questions and lab/report tasks do not implicitly activate this suite. study-planner handles delivery, feedback and scheduling.
 ---
 
 # 题目与解析
@@ -9,11 +9,11 @@ description: Select or create course-grounded practice questions, variants, comp
 
 ## 接收练习目标
 
-沿用规划或用户指定的用途、能力、已讲范围、个人薄弱点与可用时间。分清课堂示范、课后小练习、单元综合练习和模拟考试；小练习可拆解必要能力，综合/模拟题再匹配真实卷结构。不让每个基础问题都套成考试大题。
+自动接入遵循[共同记录约定](../study-planner/references/coordination.md)的系统课程适用范围；明确点名本模块可单独设计或核对题目，不启动其余模块。沿用规划或用户指定的用途、能力、已讲范围、个人薄弱点与可用时间。分清课堂示范、课后小练习、单元综合练习和模拟考试；小练习可拆解必要能力，综合/模拟题再匹配真实卷结构。不让每个基础问题都套成考试大题。
 
 需要从示范过渡到独立解题、调整支持或设计综合方法选择时，读取[练习支持与方法选择](references/practice-progression.md)。按实际证据选择任务，不把所有学生固定放在同一训练阶段。
 
-读取当前相关讲义、习题/答案与有效考试分析；新课程先核对资料身份与实际范围，不把旧卷当现行要求。共享课程写入遵循[共同记录约定](../study-planner/references/coordination.md)，规范题目与解析保存在 `questions/`。临时答疑优先直接讲解并记side-notes，不启动整套出题流程。
+读取当前相关讲义、习题/答案与有效考试分析；新课程先核对资料身份与实际范围，不把旧卷当现行要求。共享课程写入遵循[共同记录约定](../study-planner/references/coordination.md)，新题干保存在 `questions/prompts/<ID>.md`，对应完整解析保存在 `questions/solutions/<ID>.md`，沿用同一稳定题ID；既有题目文件保留原路径。按[课程文件入口](../study-planner/references/course-files.md)向规划交付保存位置与可见范围。已建立课程内的临时答疑优先直接讲解并记side-notes，不启动整套出题流程。
 
 ## 来源与设计
 
@@ -41,6 +41,8 @@ description: Select or create course-grounded practice questions, variants, comp
 
 ## 交付
 
-向规划交付题干、能力映射、提示、完整解析、评分依据及核对说明。独立尝试时只向学生展示题干与必要信息，提示/解析在对应反馈阶段或用户明确索要时展开。课堂教师可换讲法，修正答案时更新同一题目来源，避免题解文档保存相反结论。
+向规划交付题干、能力映射、提示、完整解析、评分依据及核对说明，以及分别保存的题干/解析路径；由规划按实际展示情况刷新学生可见的产出索引。独立尝试时只向学生展示题干与必要信息，提示/解析在对应反馈阶段或用户明确索要时展开。课堂教师可换讲法，修正答案时更新同一题目来源，避免题解文档保存相反结论。
+
+同一questions反馈可供study-notes采用已核对的方法、定义表达及来源，说明其对应主题ID、实际可见范围和必要条件，供笔记覆盖核对。未向学生展示的解析不交付为可见笔记；暴露条件结合规划的真实practice记录核对，未知则只交付已讲概念和非泄题的方法说明。发现笔记引用错误先修正同一题目原记录，再通知规划更新阅读产物。
 
 学生的实际回答、提示条件、个人错因和后续安排由规划记录；本模块不预填不存在的作答。单元HTML汇编读取同一份题目/解析及真实练习记录，不复制成另一套学习状态。
