@@ -1,6 +1,7 @@
 """Synthetic material intake/navigation regressions; no real course or learner data."""
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 import sys
 import tempfile
@@ -67,6 +68,123 @@ class CourseFilesTests(unittest.TestCase):
         self.assertEqual(result['inbox'], str(self.materials / 'inbox'))
         with self.assertRaises(ValueError):
             files.init_course(self.root, self.materials, 'DIFFERENT', [self.external])
+
+    def test_registry_validation_names_malformed_fields_in_cli_without_mutation(self):
+        self.intake(self.write('registered.pdf', b'Registered source', external=True))
+        valid = self.manifest()
+        entry = valid['entries'][0]
+        entry['versions'] = [{'path': entry['path'], 'sha256': entry['sha256']}]
+        malformed = [
+            ('registry', [], None), ('registry', None, None),
+            ('schema_version', 2, ('schema_version',)),
+            ('course_id', [], ('course_id',)),
+            ('materials_root', None, ('materials_root',)),
+            ('source_roots', None, ('source_roots',)),
+            ('source_roots[0]', {}, ('source_roots', 0)),
+            ('entries', None, ('entries',)),
+            ('entries[0]', None, ('entries', 0)),
+            ('entries[0].id', [], ('entries', 0, 'id')),
+            ('entries[0].path', None, ('entries', 0, 'path')),
+            ('entries[0].sha256', 'not-a-digest', ('entries', 0, 'sha256')),
+            ('entries[0].category', 'unknown', ('entries', 0, 'category')),
+            ('entries[0].inspection', [], ('entries', 0, 'inspection')),
+            ('entries[0].chapters', None, ('entries', 0, 'chapters')),
+            ('entries[0].chapters[0]', [], ('entries', 0, 'chapters', 0)),
+            ('entries[0].chapters[0].chapter', None, ('entries', 0, 'chapters', 0, 'chapter')),
+            ('entries[0].chapters[0].locator', {}, ('entries', 0, 'chapters', 0, 'locator')),
+            ('entries[0].origin_paths', {}, ('entries', 0, 'origin_paths')),
+            ('entries[0].origin_paths[0]', None, ('entries', 0, 'origin_paths', 0)),
+            ('entries[0].origin_sha256', [], ('entries', 0, 'origin_sha256')),
+            ('entries[0].origin_sha256', {'bad': None}, ('entries', 0, 'origin_sha256')),
+            ('entries[0].versions', None, ('entries', 0, 'versions')),
+            ('entries[0].versions[0]', [], ('entries', 0, 'versions', 0)),
+            ('entries[0].versions[0].path', None, ('entries', 0, 'versions', 0, 'path')),
+            ('entries[0].versions[0].sha256', None, ('entries', 0, 'versions', 0, 'sha256')),
+            ('entries[0].unavailable_versions', None, ('entries', 0, 'unavailable_versions')),
+            ('entries[0].received_sources', None, ('entries', 0, 'received_sources')),
+        ]
+
+        def unchanged_files():
+            return {str(p.relative_to(self.base)): (p.read_bytes(), p.stat().st_mtime_ns)
+                    for p in self.base.rglob('*') if p.is_file() and p.name != '.course-records.lock'}
+
+        for field, replacement, route in malformed:
+            with self.subTest(field=field, replacement=replacement):
+                data = json.loads(json.dumps(valid))
+                if route is None:
+                    data = replacement
+                else:
+                    parent = data
+                    for part in route[:-1]:
+                        parent = parent[part]
+                    parent[route[-1]] = replacement
+                (self.root / 'materials.json').write_text(json.dumps(data))
+                before = unchanged_files()
+                result = subprocess.run([sys.executable, '-B', str(SCRIPT), 'scan', '--root', str(self.root)],
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn('Invalid materials.json: ' + field, result.stderr)
+                self.assertNotIn('Traceback', result.stderr)
+                self.assertEqual(result.stdout, '')
+                self.assertEqual(unchanged_files(), before)
+
+        (self.root / 'materials.json').write_text('{broken json')
+        before = unchanged_files()
+        result = subprocess.run([sys.executable, '-B', str(SCRIPT), 'scan', '--root', str(self.root)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('Invalid materials.json: JSON could not be parsed', result.stderr)
+        self.assertNotIn('Traceback', result.stderr)
+        self.assertEqual(unchanged_files(), before)
+
+    def test_malformed_registry_rejects_all_consumers_before_material_or_index_writes(self):
+        self.intake(self.write('registered.pdf', b'Registered source', external=True))
+        data = self.manifest()
+        data['entries'][0]['chapters'] = None
+        (self.root / 'materials.json').write_text(json.dumps(data))
+        source = self.write('inbox/new.pdf', b'Keep pending source')
+        item = self.base / 'item.json'
+        item.write_text(json.dumps(self.item(source)))
+        targets = self.base / 'targets.json'
+        targets.write_text(json.dumps(self.targets()))
+        commands = [
+            ['init', '--materials-root', str(self.materials), '--course', 'SYNTHETIC-COURSE',
+             '--source-root', str(self.external)],
+            ['scan'],
+            ['import', '--item-json', str(item), '--expected', self.version()],
+            ['index', '--expected-manifest', self.version(), '--expected-targets-json', str(targets)],
+        ]
+        before = {str(p.relative_to(self.base)): (p.read_bytes(), p.stat().st_mtime_ns)
+                  for p in self.base.rglob('*') if p.is_file() and p.name != '.course-records.lock'}
+        for command in commands:
+            with self.subTest(command=command[0]):
+                result = subprocess.run([sys.executable, '-B', str(SCRIPT), *command, '--root', str(self.root)],
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn('Invalid materials.json: entries[0].chapters', result.stderr)
+                self.assertNotIn('Traceback', result.stderr)
+                self.assertEqual(result.stdout, '')
+                after = {str(p.relative_to(self.base)): (p.read_bytes(), p.stat().st_mtime_ns)
+                         for p in self.base.rglob('*') if p.is_file() and p.name != '.course-records.lock'}
+                self.assertEqual(after, before)
+
+    def test_registry_validation_preserves_extra_fields_and_optional_legacy_collections(self):
+        source = self.write('registered.pdf', b'Registered source', external=True)
+        self.intake(source)
+        data = self.manifest()
+        data['custom_registry'] = {'preserve': ['unknown', 1]}
+        entry = data['entries'][0]
+        entry['custom_entry'] = {'preserve': 'original'}
+        for field in ('origin_paths', 'origin_sha256', 'versions', 'received_sources'):
+            entry.pop(field, None)
+        (self.root / 'materials.json').write_text(json.dumps(data))
+        self.assertEqual(files.registry(self.root)[0], data)
+        self.assertIs(files.validate_registry(data), data)
+        files.scan_course(self.root)
+        files.build_indexes(self.root, self.version(), self.targets())
+        self.intake(source)
+        self.assertEqual(self.manifest()['custom_registry'], data['custom_registry'])
+        self.assertEqual(self.manifest()['entries'][0]['custom_entry'], entry['custom_entry'])
 
     def test_scan_reports_new_and_duplicate_bytes_without_guessing_classification(self):
         first = self.write('inbox/lecture.pdf', b'Chapter A')

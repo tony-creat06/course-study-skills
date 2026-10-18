@@ -170,7 +170,7 @@ def summarize(data):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', required=True)
-    parser.add_argument('--output', help='Scratch output outside shared course records')
+    parser.add_argument('--output', help='New .json scratch file outside shared records; existing paths are refused')
     parser.add_argument('--root', help='Shared course root for version-checked output')
     parser.add_argument('--path', help='Course-relative output path')
     parser.add_argument('--expected', help='SHA from course_records.py read, or absent')
@@ -190,16 +190,15 @@ def main():
             raise ValueError('Output must not overwrite the source records')
         result = summarize(json.loads(source.read_text(encoding='utf-8')))
         content = json.dumps(result, ensure_ascii=False, indent=2) + '\n'
+        module_path = Path(__file__).resolve().parents[2] / 'study-planner/scripts/course_records.py'
+        spec = importlib.util.spec_from_file_location('course_records', module_path)
+        records = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(records)
         if protected:
-            module_path = Path(__file__).resolve().parents[2] / 'study-planner/scripts/course_records.py'
-            spec = importlib.util.spec_from_file_location('course_records', module_path)
-            records = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(records)
             saved = records.write_record(args.root, args.path, 'analyst', args.expected, content)
             print(json.dumps(dict(saved, papers=len(result['papers'])), ensure_ascii=False))
             return
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(content, encoding='utf-8')
+        records.write_preview(destination, content.encode('utf-8'), '.json')
         print(json.dumps({'papers': len(result['papers']), 'output': str(destination)}, ensure_ascii=False))
     except (OSError, ValueError, TypeError, KeyError) as exc:
         parser.exit(2, str(exc) + '\n')

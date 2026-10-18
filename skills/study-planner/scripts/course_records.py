@@ -138,6 +138,33 @@ def atomic_write(target, data):
             os.unlink(name)
 
 
+def write_preview(target, data, suffix):
+    """Create a typed scratch file without ever replacing an existing path."""
+    target = Path(target)
+    if target.suffix != suffix:
+        raise ValueError('Scratch output must use the ' + suffix + ' extension')
+    if os.path.lexists(target):
+        raise ValueError('Scratch output already exists; choose a new preview filename or use protected output')
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(prefix='.' + target.name + '.', dir=target.parent)
+    try:
+        with os.fdopen(fd, 'wb') as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            # A link publishes the complete file and fails atomically if a rival
+            # creates the destination; os.replace would silently overwrite it.
+            os.link(name, target)
+        except FileExistsError as exc:
+            raise ValueError('Scratch output already exists; choose a new preview filename or use protected output') from exc
+        if target.read_bytes() != data:
+            raise OSError('Scratch output read-back verification failed')
+    finally:
+        if os.path.exists(name):
+            os.unlink(name)
+
+
 def backup_record(root, target, previous):
     if previous is None:
         return None
@@ -269,23 +296,27 @@ def recover_bundle(root, role, decision=None, lock_timeout=2.0):
         path = journal_path(root)
         if not path.exists():
             return {'recovered': False, 'paths': []}
-        journal = json.loads(path.read_text(encoding='utf-8'))
+        try:
+            journal = json.loads(path.read_text(encoding='utf-8'))
+        except (ValueError, UnicodeError) as exc:
+            raise ValueError('Invalid pending journal at ' + str(path) +
+                             '; preserve this file and the course records. Restore a verified journal backup before recover; do not delete the marker to bypass recovery') from exc
         if not isinstance(journal, dict) or type(journal.get('version')) is not int:
-            raise ValueError('Unsupported pending journal; preserve it for inspection')
+            raise ValueError('Unsupported pending journal at ' + str(path) + '; preserve it and the course records for inspection; do not delete the marker')
         version = journal['version']
         if version == 1 and set(journal) == {'version', 'decision', 'updates'}:
             owner = 'main'  # Recover bundles saved by v0.2.7 and earlier.
         elif version == 2 and set(journal) == {'version', 'role', 'decision', 'updates'} and isinstance(journal['role'], str) and journal['role'] in {'main', 'analyst'}:
             owner = journal['role']
         else:
-            raise ValueError('Unsupported pending journal; preserve it for inspection')
+            raise ValueError('Unsupported pending journal at ' + str(path) + '; preserve it and the course records for inspection; do not delete the marker')
         if not isinstance(journal['decision'], str) or journal['decision'] not in {'finish', 'abort'}:
-            raise ValueError('Unsupported pending journal; preserve it for inspection')
+            raise ValueError('Unsupported pending journal at ' + str(path) + '; preserve it and the course records for inspection; do not delete the marker')
         if role == 'analyst' and owner != 'analyst':
             raise ValueError('Analyst cannot recover a main bundle')
         raw_entries = journal['updates']
         if not isinstance(raw_entries, list) or any(not isinstance(e, dict) or set(e) != {'path', 'expected', 'content', 'previous'} for e in raw_entries):
-            raise ValueError('Invalid pending entries')
+            raise ValueError('Invalid pending entries at ' + str(path) + '; preserve the journal and course records for inspection')
         entries = bundle_entries(root, [{k: e[k] for k in ('path', 'expected', 'content')} for e in raw_entries], owner)
         if any(str(target_path(root, e['path'])[1].relative_to(root)) != e['path'] for e in raw_entries):
             raise ValueError('Pending journal paths must be canonical')

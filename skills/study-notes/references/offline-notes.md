@@ -39,7 +39,7 @@ equations每项必需id、title、section_id、source_refs、math_html，可选c
 
 可选lesson_links为title/path数组，path相对notes/，例如lessons/L01.html；用于章节索引。每份HTML独立包含正文，索引链接不是阅读依赖。
 
-课程外预览：
+课程外预览只新建.html文件；已有文件、链接及其他后缀会被拒绝。重试请换新预览文件名；正式更新使用下方带旧SHA的保存模式：
 
 ```text
 python3 <study-notes>/scripts/render_notes.py --input <内部草稿.json> --output <项目测试目录>/preview.html
@@ -54,7 +54,7 @@ python3 <study-planner>/scripts/course_records.py read --root <课程根目录> 
 python3 <study-notes>/scripts/render_notes.py --input <课程根目录>/notes/chapters/<章ID>.json --root <课程根目录> --path notes/chapters/<章ID>.html --expected <HTML旧SHA或absent>
 ```
 
-sources只列实际存在且采用的反馈；read-set按实际来源扩充，不局限示例中的一课。正式JSON内嵌需要的图片，不能只在临时目录留下草稿或图像。HTML保存持共享锁，同时验证反馈/目标SHA、覆盖映射，备份、原子替换并回读；JSON也独立接受旧目标SHA保护。手改/来源冲突先合并，不改成absent强写。
+sources只列实际存在且采用的反馈；read-set按实际来源扩充，不局限示例中的一课。正式JSON内嵌需要的图片，不能只在临时目录留下草稿或图像。HTML保存持共享锁，同时核对本次读取的输入JSON字节版本、反馈/目标SHA与覆盖映射，再备份、原子替换并回读；输入在渲染后变化时拒绝发布旧正文，重新读取已保存JSON后重建。JSON也独立接受旧目标SHA保护。手改/来源冲突先合并，不改成absent强写。
 
 JSON与HTML是分别保存，不是成对原子提交。JSON已存但HTML发布失败时保留旧HTML，由规划在既有检查点记录具体待重建范围；重新读取变化来源/目标后合并重建，不回滚课堂事实，也不把尚未成功的HTML称为已更新。两份均成功回读后交付路径与版本。notes不能bundle或recover；原main/analyst未完成批次由其维护者处理。
 

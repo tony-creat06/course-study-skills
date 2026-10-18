@@ -19,6 +19,7 @@ def helper(name, filename):
 
 
 records = helper('notes_records', 'course_records.py')
+math_text = helper('notes_math_text', 'math_text.py')
 fragments = helper('notes_fragments', 'render_review.py')
 IMAGE_SPEC = importlib.util.spec_from_file_location('notes_images', Path(__file__).with_name('note_images.py'))
 images = importlib.util.module_from_spec(IMAGE_SPEC)
@@ -34,13 +35,17 @@ KINDS = {'concept': '核心概念', 'term': '术语与表达', 'derivation': '�
 BASES = {'requirement': '课程明确要求', 'past-paper': '真题中出现过', 'reference': '自拟参考表达'}
 MODULE_PATHS = {'study-planner': {'practice'}, 'course-study': {'lessons', 'side-notes'},
                 'exam-analysis': {'exam'}, 'practice-builder': {'questions'}}
-RAW_MATH = re.compile(r'\\[A-Za-z]+|\\[()\[\]]|\$[^$\n]+\$|[_^]\{')
+RAW_MATH = re.compile(r'\\[A-Za-z]+|\\[()\[\]]|[_^]\{')
+
+
+def has_raw_math(value):
+    return bool(RAW_MATH.search(value) or math_text.has_math_dollars(value))
 
 
 def text(value, label):
     if not isinstance(value, str) or not value.strip():
         raise ValueError(label + ' must be a nonempty string')
-    if RAW_MATH.search(value):
+    if has_raw_math(value):
         raise ValueError('Raw LaTeX in ' + label + '; typeset formulas with MathML')
     return escape(value)
 
@@ -80,7 +85,7 @@ def fragment(value, base):
     for element in wrapper.iter():
         if 'form' in element.attrib and (fragments.local_tag(element.tag) != 'mo' or element.attrib['form'] not in {'prefix', 'infix', 'postfix'}):
             raise ValueError('MathML form is limited to prefix/infix/postfix on mo')
-    if RAW_MATH.search(''.join(wrapper.itertext())):
+    if has_raw_math(''.join(wrapper.itertext())):
         raise ValueError('Raw LaTeX detected, including code blocks; use MathML')
     return result
 
@@ -221,20 +226,31 @@ def render(data, base):
     return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="' + escape(csp, quote=True) + '"><meta name="feedback-versions" content="' + escape(versions, quote=True) + '"><meta name="note-coverage" content="' + escape(mapping, quote=True) + '"><title>' + title + '</title><style>' + CSS + '</style></head><body data-mode="reading"><main class="notebook"><header class="note-header"><h1>' + title + '</h1><p class="scope">' + scope + '</p>' + intro + controls + search + '</header><div class="layout">' + sidebar + '<div class="content">' + ''.join(cards) + '<footer>可离线阅读。打印时会展开全部详细解释。</footer></div></div></main><script>' + SCRIPT + '</script></body></html>'
 
 
-def publish(root, relative, expected, data, html, lock_timeout=2.0):
+def publish(root, relative, expected, data, html, lock_timeout=2.0, *, input_path=None, input_sha256=None):
     records.check_role('notes', relative)
     if Path(relative).suffix != '.html':
         raise ValueError('Rendered note destination must be HTML')
+    if (input_path is None) != (input_sha256 is None):
+        raise ValueError('Note input path and SHA256 must be supplied together')
+    if input_sha256 is not None and (not isinstance(input_sha256, str) or not re.fullmatch('[0-9a-f]{64}', input_sha256)):
+        raise ValueError('Note input requires its captured SHA256')
     root, target = records.target_path(root, relative)
     if not root.is_dir():
         raise ValueError('An existing course record root is required')
     sources = source_list(data)
     if isinstance(data, dict) and type(data.get('schema_version')) is int and data['schema_version'] == 3:
-        lecture_renderer().validate_for_publish(data, source_list, text, sections, helper, RAW_MATH)
+        lecture_renderer().validate_for_publish(data, source_list, text, sections, helper, has_raw_math)
     else:
         sections.validate(data, {source['path'] for source in sources})
     with records.course_lock(root, lock_timeout):
         records.check_pending(root)
+        if input_path is not None:
+            try:
+                current_input = Path(input_path).read_bytes()
+            except OSError as exc:
+                raise ValueError('Note input is unavailable; re-read the saved JSON and rebuild') from exc
+            if records.digest(current_input) != input_sha256:
+                raise ValueError('Stale note input; re-read the saved JSON and rebuild before publishing')
         _, target = records.target_path(root, relative)
         previous = target.read_bytes() if target.exists() else None
         if records.digest(previous) != expected:
@@ -257,7 +273,7 @@ def publish(root, relative, expected, data, html, lock_timeout=2.0):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', required=True, help='Internal module draft, not a student input form')
-    parser.add_argument('--output', help='Scratch preview outside shared course records')
+    parser.add_argument('--output', help='New .html scratch file outside shared records; existing paths are refused')
     parser.add_argument('--root', help='Existing course record root')
     parser.add_argument('--path', help='Course-relative notes HTML path')
     parser.add_argument('--expected', help='Destination SHA or absent')
@@ -275,16 +291,19 @@ def main():
             destination = Path(args.output)
         if source.resolve() == destination.resolve() or (destination.exists() and source.samefile(destination)):
             raise ValueError('Output must not overwrite source records')
-        data = json.loads(source.read_text(encoding='utf-8'))
+        source = source.resolve()
+        input_bytes = source.read_bytes()
+        data = json.loads(input_bytes.decode('utf-8'))
         html = render(data, source.parent)
         if args.root is not None:
             # Root-relative lesson index paths must work from any notes subdirectory.
             prefix = '../' * (len(Path(args.path).parts) - 2)
             for link in data.get('lesson_links', []):
                 html = html.replace('href="' + link['path'] + '"', 'href="' + prefix + link['path'] + '"')
-            result = publish(args.root, args.path, args.expected, data, html, args.lock_timeout)
+            result = publish(args.root, args.path, args.expected, data, html, args.lock_timeout,
+                             input_path=source, input_sha256=records.digest(input_bytes))
         else:
-            records.atomic_write(destination, html.encode('utf-8'))
+            records.write_preview(destination, html.encode('utf-8'), '.html')
             result = {'path': str(destination), 'preview': True}
         print(json.dumps(result, ensure_ascii=False))
     except (OSError, ValueError, UnicodeError, TypeError, KeyError) as exc:

@@ -18,21 +18,21 @@ The bundle is for sustained, systematic course teaching from a usable set of lec
 
 ## Install
 
-Version **v0.3.0** contains all five skills. Use Codex on macOS or Linux with Python 3.11 or newer. The helpers use Python's standard library and POSIX file locking; no Obsidian plugin, API key, or project-specific development files are required. Codex needs permission to read your materials and write the course-record directory you choose.
+Version **v0.3.1** contains all five skills. Use Codex on macOS or Linux with Python 3.11 or newer. The helpers use Python's standard library and POSIX file locking; no Obsidian plugin, API key, or project-specific development files are required. Codex needs permission to read your materials and write the course-record directory you choose. Check `python3 --version` first; if it is older than 3.11, use a supported Python interpreter for the commands below.
 
 Install all five folders together in the same skills directory: they use relative paths to shared helpers. For a fresh user-wide installation, use Codex's documented `~/.agents/skills/` directory:
 
 ```bash
 git clone https://github.com/tony-creat06/course-study-skills.git
 cd course-study-skills
-git checkout v0.3.0
+git checkout v0.3.1
 mkdir -p ~/.agents/skills
 cp -R skills/study-planner skills/course-study skills/exam-analysis skills/practice-builder skills/study-notes ~/.agents/skills/
 ```
 
-Alternatively, download `course-study-skills-v0.3.0.zip` from the [v0.3.0 release](https://github.com/tony-creat06/course-study-skills/releases/tag/v0.3.0), verify it against the accompanying SHA256 file, extract it, and copy all five folders inside `skills/` to the same destination. The uploaded bundle starts directly with `skills/`, `tests/`, `README.md` and `LICENSE`; GitHub's automatic source archives add a repository root folder.
+Alternatively, download `course-study-skills-v0.3.1.zip` from the [v0.3.1 release](https://github.com/tony-creat06/course-study-skills/releases/tag/v0.3.1), verify it against the accompanying SHA256 file, extract it, and copy all five folders inside `skills/` to the same destination. The uploaded bundle starts directly with `skills/`, `tests/`, `README.md` and `LICENSE`; GitHub's automatic source archives add a repository root folder.
 
-Codex's built-in Skill Installer can also install all five repository paths at ref `v0.3.0`: `skills/study-planner`, `skills/course-study`, `skills/exam-analysis`, `skills/practice-builder`, and `skills/study-notes`. Select one common destination for the five folders.
+Codex's built-in Skill Installer can also install all five repository paths at ref `v0.3.1`: `skills/study-planner`, `skills/course-study`, `skills/exam-analysis`, `skills/practice-builder`, and `skills/study-notes`. Select one common destination for the five folders.
 
 For an upgrade, use the directory from which your existing skills are loaded, including `~/.codex/skills/` on installations already using that location. Do not create a second copy with the same names in another searched directory. Back up all five folders, preserve personal edits, and replace the bundle together. Finish or abort pending course-record bundles using the current writer before replacement. Keep course materials and personal learning records outside the installed skills; upgrading does not require migrating those records. Older downloaded ZIPs retain their original version.
 
@@ -58,7 +58,7 @@ The skills treat learner-provided materials as the primary source. Recent two to
 
 This repository contains only the reusable skill instructions and their small standard-library Python helpers. It does not contain lecture notes, past papers, answers, personal progress, student work, or other course materials.
 
-Version 0.3.0 adds complete chapter/course notes and the material-intake workflow to the v0.2.8 evidence baseline. Related exam records, profiles and statistics are saved as a recoverable `analyst` bundle. The planner reads them with `read-set`, which holds the writer's lock across all requested files, then passes the same evidence snapshot to teaching and question design. Interrupted publication blocks shared reads until recovery. Analysts may recover their own exam bundle; only the planner's `main` role can change the shared plan or checkpoint. The current writer also recovers older v1 main journals.
+Version 0.3 adds complete chapter/course notes and the material-intake workflow to the v0.2.8 evidence baseline. Patch 0.3.1 fixes currency-text rejection, protects scratch outputs from overwrites, and verifies the rendered note input under the publication lock. Scratch outputs require a new `.html` filename for notes/reviews or `.json` for statistics; shared updates keep the existing version-checked mode. Related exam records, profiles and statistics are saved as a recoverable `analyst` bundle. The planner reads them with `read-set`, which holds the writer's lock across all requested files, then passes the same evidence snapshot to teaching and question design. Interrupted publication blocks shared reads until recovery. Analysts may recover their own exam bundle; only the planner's `main` role can change the shared plan or checkpoint. The current writer also recovers older v1 main journals.
 
 The planner compares source-backed question styles, ability chains and observed mark allocations with existing teaching and practice, then records specific supplements and their actual coverage. History, partial-paper marks and personal priorities remain distinct. Summary fields preserve joint allocations and source parts; missing style labels stay unclassified. When the exam is near and time is insufficient, the planner changes the same plan, prioritizes the necessary teaching and practice, and records deferred depth for later completion. Analysis supplies evidence rather than maintaining a competing schedule.
 

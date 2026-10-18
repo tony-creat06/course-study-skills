@@ -24,7 +24,7 @@ python3 <study-planner>/scripts/course_records.py bundle --root <课程目录> -
 
 去重计数模式参考[past-paper-topic-analyzer的build_freq_year](https://github.com/GeniusTrader-Harry/past-paper-topic-analyzer/blob/main/scripts/build_xlsx.py)；解析与展示分离、父题/小问结构参考其[parse_essays.py](https://github.com/GeniusTrader-Harry/past-paper-topic-analyzer/blob/main/scripts/parse_essays.py)。本脚本按本项目结构独立实现，未采用经济学专用正则。
 
-结构化题目JSON及关联分析通过共同记录脚本的analyst批次保存，经过版本比较、锁、备份与中断恢复。--output只用于课程外临时计算，不直接覆盖共享分析。分值/分类完整不代表原题读法已核实；材料疑点按共同核对规则处理。
+结构化题目JSON及关联分析通过共同记录脚本的analyst批次保存，经过版本比较、锁、备份与中断恢复。--output只新建课程外临时.json文件；已有目标或其他后缀拒绝写入，重试选新文件名，不直接覆盖共享分析。分值/分类完整不代表原题读法已核实；材料疑点按共同核对规则处理。
 
 ## 面向学生的分析简报
 

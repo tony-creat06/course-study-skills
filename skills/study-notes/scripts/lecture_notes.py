@@ -155,7 +155,7 @@ def validate_for_publish(data, source_list, text, content, helper, raw_math):
         for element in wrapper.iter():
             if 'form' in element.attrib and (validator.local_tag(element.tag) != 'mo' or element.attrib['form'] not in {'prefix', 'infix', 'postfix'}):
                 raise ValueError('MathML form is limited to prefix/infix/postfix on mo')
-        if raw_math.search(''.join(wrapper.itertext())):
+        if raw_math(''.join(wrapper.itertext())):
             raise ValueError('Raw LaTeX detected, including code blocks; use MathML')
         return rendered
 

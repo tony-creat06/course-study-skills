@@ -61,6 +61,38 @@ class LectureNoteTests(unittest.TestCase):
         self.base = Path(self.folder.name)
         self.data = fixture_v3()
 
+    def test_prices_pass_body_metadata_and_locked_publication(self):
+        data = copy.deepcopy(self.data)
+        price = '成本从 $5 升到 $10。'
+        data['unit'] += ' · ' + price
+        data['scope'] += price
+        data['intro_html'] = '<p>' + price + '</p>'
+        data['items'][0]['body_html'] += '<p>' + price + '</p>'
+        data['items'][0]['summary_html'] += '<p>' + price + '</p>'
+        html = notes.render(data, self.base)
+        self.assertIn(price, html)
+        root = self.base / 'course'
+        seed(root)
+        source = root / 'notes/chapters/prices.json'
+        import json
+        saved = notes.records.write_record(root, 'notes/chapters/prices.json', 'notes', 'absent', json.dumps(data, ensure_ascii=False))
+        receipt = notes.publish(root, 'notes/chapters/prices.html', 'absent', data, html,
+                                input_path=source, input_sha256=saved['sha256'])
+        self.assertTrue(receipt['changed'])
+        self.assertIn(price, (root / receipt['path']).read_text())
+
+    def test_numeric_raw_math_still_rejected_in_body_metadata_and_code(self):
+        for raw in ('$2x+1', '$2 x+1', '$20$', r'\frac{1}{2}'):
+            for field in ('body', 'metadata', 'code'):
+                data = copy.deepcopy(self.data)
+                if field == 'metadata':
+                    data['scope'] += raw
+                else:
+                    tag = 'pre' if field == 'code' else 'p'
+                    data['items'][0]['body_html'] += '<' + tag + '>' + raw + '</' + tag + '>'
+                with self.subTest(raw=raw, field=field), self.assertRaises(ValueError):
+                    notes.render(data, self.base)
+
     def test_full_core_is_readable_without_unfolding_or_javascript(self):
         html = notes.render(self.data, self.base)
         page = CoreReader(html)

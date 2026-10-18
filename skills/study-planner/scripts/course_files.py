@@ -43,14 +43,86 @@ def beneath(path, root):
     return path == root or root in path.parents
 
 
+def validate_registry(data):
+    """Check fields consumed here without rewriting or dropping registry content."""
+    def invalid(field, requirement):
+        raise ValueError('Invalid materials.json: ' + field + ' ' + requirement)
+
+    def text(value, field):
+        if not isinstance(value, str):
+            invalid(field, 'must be text')
+
+    def digest(value, field):
+        if (not isinstance(value, str) or len(value) != 64
+                or any(c not in '0123456789abcdef' for c in value)):
+            invalid(field, 'must be a lowercase SHA256 digest')
+
+    def sequence(value, field):
+        if not isinstance(value, list):
+            invalid(field, 'must be a list')
+
+    def locations(value, field):
+        sequence(value, field)
+        for i, location in enumerate(value):
+            prefix = field + '[' + str(i) + ']'
+            if not isinstance(location, dict):
+                invalid(prefix, 'must be an object')
+            text(location.get('path'), prefix + '.path')
+            digest(location.get('sha256'), prefix + '.sha256')
+
+    if not isinstance(data, dict):
+        invalid('registry', 'must be an object')
+    if data.get('schema_version') != 1:
+        invalid('schema_version', 'must be 1')
+    for field in ('course_id', 'materials_root'):
+        text(data.get(field), field)
+    sequence(data.get('source_roots'), 'source_roots')
+    for i, source in enumerate(data['source_roots']):
+        text(source, 'source_roots[' + str(i) + ']')
+    sequence(data.get('entries'), 'entries')
+    for i, entry in enumerate(data['entries']):
+        prefix = 'entries[' + str(i) + ']'
+        if not isinstance(entry, dict):
+            invalid(prefix, 'must be an object')
+        for field in ('id', 'path', 'inspection'):
+            text(entry.get(field), prefix + '.' + field)
+        digest(entry.get('sha256'), prefix + '.sha256')
+        if entry.get('category') not in CATEGORIES:
+            invalid(prefix + '.category', 'must be a supported category')
+        chapters = entry.get('chapters')
+        sequence(chapters, prefix + '.chapters')
+        for j, chapter in enumerate(chapters):
+            chapter_prefix = prefix + '.chapters[' + str(j) + ']'
+            if not isinstance(chapter, dict):
+                invalid(chapter_prefix, 'must be an object')
+            for field in ('chapter', 'locator'):
+                text(chapter.get(field), chapter_prefix + '.' + field)
+        origins = entry.get('origin_paths', [])
+        sequence(origins, prefix + '.origin_paths')
+        for j, origin in enumerate(origins):
+            text(origin, prefix + '.origin_paths[' + str(j) + ']')
+        hashes = entry.get('origin_sha256', {})
+        if not isinstance(hashes, dict):
+            invalid(prefix + '.origin_sha256', 'must be an object')
+        for path, sha in hashes.items():
+            digest(sha, prefix + '.origin_sha256[' + repr(path) + ']')
+        if 'versions' in entry:
+            locations(entry['versions'], prefix + '.versions')
+        for field in ('unavailable_versions', 'received_sources'):
+            if field in entry:
+                sequence(entry[field], prefix + '.' + field)
+    return data
+
+
 def registry(root):
     result = records.read_record(root, 'materials.json')
     if result['content'] is None:
         raise ValueError('Initialize the course material registry first')
-    data = json.loads(result['content'])
-    if data.get('schema_version') != 1 or not isinstance(data.get('entries'), list):
-        raise ValueError('Unsupported material registry')
-    return data, result['sha256']
+    try:
+        data = json.loads(result['content'])
+    except ValueError as exc:
+        raise ValueError('Invalid materials.json: JSON could not be parsed: ' + str(exc)) from exc
+    return validate_registry(data), result['sha256']
 
 
 def init_course(root, materials_root, course_id, source_roots=()):

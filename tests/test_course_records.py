@@ -55,6 +55,24 @@ records.write_bundle(ROOT, ROLE, UPDATES)
         self.assertTrue((self.root / records.PENDING).exists())
         self.assertFalse((self.root / 'current.md').exists())
 
+    def test_damaged_journal_cli_preserves_state_and_names_recovery_file(self):
+        records.write_record(self.root, 'current.md', 'main', 'absent', 'Keep this checkpoint')
+        pending = self.root / records.PENDING
+        for body in (b'', b'{broken', b'[]', b'null', b'\xff'):
+            with self.subTest(body=body):
+                pending.write_bytes(body)
+                before = (pending.read_bytes(), pending.stat().st_mtime_ns)
+                for command in (['read', '--path', 'current.md'], ['recover', '--role', 'main']):
+                    result = subprocess.run([sys.executable, '-B', str(SCRIPT), *command, '--root', str(self.root)], capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 2)
+                    self.assertNotIn('Traceback', result.stderr)
+                    if command[0] == 'recover':
+                        self.assertIn(str(pending), result.stderr)
+                        self.assertIn('preserve', result.stderr)
+                    self.assertEqual((pending.read_bytes(), pending.stat().st_mtime_ns), before)
+                    self.assertEqual((self.root / 'current.md').read_text(), 'Keep this checkpoint')
+                    self.assertFalse((self.root / '.history').exists())
+
     def test_noop_backup_and_manual_edit_protection(self):
         initial = records.write_record(self.root, 'current.md', 'main', 'absent', 'A')
         mtime = (self.root / 'current.md').stat().st_mtime_ns

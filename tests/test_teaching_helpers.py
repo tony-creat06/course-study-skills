@@ -182,6 +182,18 @@ class ReviewCliPathTests(unittest.TestCase):
         self.assertEqual((self.source.read_bytes(), self.source.stat().st_mtime_ns), before)
 
 
+class RenderedDollarTextTests(unittest.TestCase):
+    def test_prices_pass_review_fragments_but_raw_math_does_not(self):
+        for value in ('成本从 $5 升到 $10。', 'The cost rose from $5 to $10.',
+                      'Price is $20.', r'Escaped \$5 and \$10.'):
+            with self.subTest(value=value):
+                self.assertIn(value, review.render_fragment('<p>' + value + '</p>', ROOT))
+        for value in ('$2x+1', '$2 x+1', '$2^2', '$2=3', '$2/3', '$20$', r'\frac{1}{2}'):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                review.render_fragment('<p>' + value + '</p>', ROOT)
+        self.assertIn('<math', review.render_fragment('<math><mi>x</mi></math>', ROOT))
+
+
 class MathematicalDeliveryTests(unittest.TestCase):
     def test_numeric_unclosed_math_is_not_mistaken_for_price(self):
         for example in ('$2x+1', '$2 x+1', '$2^2', '$2=3', '$2/3'):

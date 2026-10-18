@@ -56,7 +56,7 @@ python3 <study-planner>/scripts/course_records.py write --root <课程目录> --
 python3 <study-planner>/scripts/course_records.py note --root <课程目录> --role aside --body-file <本次答疑笔记>
 ```
 
-写入范围按角色和目录限定：main维护共同Markdown、materials.json、派生index.md/index.html/materials-index.md、lessons/practice的Markdown、transcripts的Markdown/JSON及reviews的JSON/HTML；analyst维护exam的Markdown/JSON；questions维护questions的Markdown/JSON；aside仅新增side-notes的Markdown；notes仅维护notes的JSON/HTML。笔记不能写共同事实、计划、断点、考试、题目或作答目录。notes不能bundle或recover，原main/analyst批次能力保持原边界；正式笔记由[笔记渲染器](../../study-notes/references/offline-notes.md)同锁核对来源和目标版本后保存。JSON写入先检查语法；语义与证据仍由模块核对。共享JSON也先read再write。汇总/HTML脚本写课程输出时使用--root/--path/--expected模式，从而保留同样版本保护；--output用于课程外临时预览，不是共享记录覆盖的捷径。
+写入范围按角色和目录限定：main维护共同Markdown、materials.json、派生index.md/index.html/materials-index.md、lessons/practice的Markdown、transcripts的Markdown/JSON及reviews的JSON/HTML；analyst维护exam的Markdown/JSON；questions维护questions的Markdown/JSON；aside仅新增side-notes的Markdown；notes仅维护notes的JSON/HTML。笔记不能写共同事实、计划、断点、考试、题目或作答目录。notes不能bundle或recover，原main/analyst批次能力保持原边界；正式笔记由[笔记渲染器](../../study-notes/references/offline-notes.md)同锁核对来源和目标版本后保存。JSON写入先检查语法；语义与证据仍由模块核对。共享JSON也先read再write。汇总/HTML脚本写课程输出时使用--root/--path/--expected模式，从而保留同样版本保护；--output只新建课程外临时文件：笔记/题解用.html，考试统计用.json；已有目标（包括链接）拒绝覆盖，重试时选新预览文件名。共享记录继续使用带旧SHA的正式模式，不用--output绕过保护。
 
 多个文件共同描述一份考试分析时，先用 `read-set` 一次取得相关原题记录、profile、统计与本次相关brief的内容/SHA，分析模块在课程外准备新正文及统计，再以 `bundle --role analyst` 整批提交到exam。不能逐个write这些关联结果后称整份分析已发布。规划采用时、教师或题目模块自行读取当前考试依据时，同样用read-set读取本次需要的关联文件；规划已传递完整快照内容与SHA时可直接复用。未建立的文件会返回absent；缺失资料仍需补齐或明确范围，不因取得快照而变为完整分析。
 
@@ -78,7 +78,7 @@ python3 <study-planner>/scripts/course_records.py bundle --root <课程目录> -
 python3 <study-planner>/scripts/course_records.py recover --root <课程目录> --role main
 ```
 
-批量提交是可恢复的顺序写入，并非所有文件同时原子替换。隐藏 `.course-records.pending.json` 保留中断恢复信息；存在时脚本拒绝read、read-set和普通写入。main可恢复两种批次，analyst只可用 `recover --role analyst` 恢复自己的分析批次，不能恢复或改写main的批次；aside/questions均不能恢复。恢复后回读相关记录，从实际位置接续，不能重发已保存的练习或补造学生回答。默认恢复完成该批更新；若检测到手改则保留手改、停止覆盖并报出冲突。需要取消未完成批次时有资格的角色可用 `recover --decision abort`：只回退仍匹配该批旧/新版本的文件，保留其他手改并报告路径，取消内容留 `.history/`；随后回读合并、重新核对断点再提交。新助手也能恢复旧版v1主线journal；中断中的批次应先恢复/取消，再回退Skill版本，旧助手不能恢复新增的v2journal。不能直接删journal绕过检查。
+批量提交是可恢复的顺序写入，并非所有文件同时原子替换。隐藏 `.course-records.pending.json` 保留中断恢复信息；存在时脚本拒绝read、read-set和普通写入。main可恢复两种批次，analyst只可用 `recover --role analyst` 恢复自己的分析批次，不能恢复或改写main的批次；aside/questions均不能恢复。恢复后回读相关记录，从实际位置接续，不能重发已保存的练习或补造学生回答。默认恢复完成该批更新；若检测到手改则保留手改、停止覆盖并报出冲突。需要取消未完成批次时有资格的角色可用 `recover --decision abort`：只回退仍匹配该批旧/新版本的文件，保留其他手改并报告路径，取消内容留 `.history/`；随后回读合并、重新核对断点再提交。新助手也能恢复旧版v1主线journal；中断中的批次应先恢复/取消，再回退Skill版本，旧助手不能恢复新增的v2journal。不能直接删journal绕过检查。journal无法解析或结构损坏时，保留它、当前课程记录和.history/，在诊断副本中对照可信备份；有可核验的原journal备份时先恢复它，再运行recover并回读关联记录。没有可靠恢复信息时保留独立接续摘要并停止共享覆盖，逐文件核实旧/新版本与检查点后再制定恢复方案，不能清除标记后把混合状态称为已恢复。
 
 写入及read-set支持macOS/Linux的POSIX锁；Windows共享写入/快照尚不支持，读取普通旧记录不要求锁库。工具不可用时仍保留独立笔记/可复制摘要，不能宣称已经安全同步。课程文件旧格式沿用，不需要批量迁移。
 

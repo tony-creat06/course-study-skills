@@ -5,6 +5,7 @@ This is a small text check, not a TeX parser, renderer, or correctness proof.
 Code spans/fences are excluded. Ambiguous plain-text commands are warnings.
 """
 import argparse
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -12,19 +13,11 @@ import re
 TOKENS = re.compile(r'(?<!\\)\$\$|(?<!\\)\$|(?<!\\)\\[()[\]]')
 BARE_COMMAND = re.compile(r'(?<![\\\w])(?:mathrm|mathbf|mathit|mathbb|mathcal|operatorname|frac|sqrt)\s*\{')
 PLAIN_TEX = re.compile(r'\\(?:frac|sqrt|partial|hbar|psi|omega|lambda|alpha|beta|theta|sum|int|mathrm|mathbf|operatorname)(?![A-Za-z])')
-PRICE = re.compile(r'\d+(?:,\d{3})*(?:\.\d{1,2})?(?=$|[\s.,;!?])')
-
-
-def is_price(prefix, rest):
-    """Recognize a currency literal, not every expression beginning with a digit."""
-    amount = PRICE.match(rest)
-    if not amount or '$' in rest or PLAIN_TEX.search(rest):
-        return False
-    tail = rest[amount.end():].strip()
-    if not tail or re.fullmatch(r'[.,;!?]+', tail):
-        return True
-    return bool(re.search(r'\b(?:price|cost|paid|pay|fee|total|USD)\b[^\n$]*$', prefix, re.I)
-                and not re.search(r'[+^=]|\*|(?<!\w)[xy](?!\w)', tail))
+# The course suite shares dollar classification with both HTML renderers.
+_MATH_PATH = Path(__file__).resolve().parents[2] / 'study-planner' / 'scripts' / 'math_text.py'
+_MATH_SPEC = importlib.util.spec_from_file_location('teaching_math_text', _MATH_PATH)
+math_text = importlib.util.module_from_spec(_MATH_SPEC)
+_MATH_SPEC.loader.exec_module(math_text)
 
 
 def blank(value):
@@ -88,8 +81,8 @@ def check(source):
             if value == '$' and not text[line_start:token.start()].strip() and re.match(
                     r'(?:study-planner|course-study|exam-analysis|practice-builder|study-notes)(?=\s|$)', rest):
                 continue
-            # A lone price such as $20 is prose, not an unfinished math expression.
-            if value == '$' and is_price(text[line_start:token.start()], rest):
+            # Classify each price locally, including multiple prices on one line.
+            if value == '$' and math_text.is_currency_dollar(text, token.start()):
                 continue
             active = (token.start(), value, token.end())
         else:

@@ -4,10 +4,8 @@ import argparse
 import importlib.util
 from html import escape
 import json
-import os
 from pathlib import Path
 import re
-import tempfile
 from urllib.parse import urlsplit
 import xml.etree.ElementTree as ET
 
@@ -35,7 +33,7 @@ RAW_TEX = re.compile(
     r'int|iint|iiint|oint|sum|prod|lim|infty|sin|cos|tan|exp|log|ln|'
     r'left|right|cdot|times|pm|mp|leq|geq|neq|approx|equiv|'
     r'vec|hat|bar|overline|dot|ddot|text|mathrm|mathbf|mathit|mathbb|mathcal|operatorname)(?![A-Za-z])'
-    r'|\\[()\[\]]|\$[^$\n]+\$')
+    r'|\\[()\[\]]')
 
 
 def evidence_label(item):
@@ -76,6 +74,9 @@ IMAGE_SPEC = importlib.util.spec_from_file_location('review_passive_images', Pat
 images = importlib.util.module_from_spec(IMAGE_SPEC)
 IMAGE_SPEC.loader.exec_module(images)
 image_data = images.image_data
+MATH_SPEC = importlib.util.spec_from_file_location('review_math_text', Path(__file__).with_name('math_text.py'))
+math_text = importlib.util.module_from_spec(MATH_SPEC)
+MATH_SPEC.loader.exec_module(math_text)
 
 
 def local_tag(tag):
@@ -99,7 +100,7 @@ def render_fragment(fragment, base):
     def text_node(value, code=False):
         # Literal Windows paths are prose; mathematical commands still require typesetting.
         inspected = re.sub(r'\b[A-Za-z]:\\[^\s<>]+', '', value or '')
-        if not code and RAW_TEX.search(inspected):
+        if not code and (RAW_TEX.search(inspected) or math_text.has_math_dollars(inspected)):
             raise ValueError('Raw LaTeX detected: typeset it with MathML')
         return escape(value or '')
 
@@ -198,7 +199,7 @@ def render(data, base):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', required=True)
-    parser.add_argument('--output', help='Scratch output outside shared course records')
+    parser.add_argument('--output', help='New .html scratch file outside shared records; existing paths are refused')
     parser.add_argument('--root', help='Shared course root for version-checked output')
     parser.add_argument('--path', help='Course-relative output path')
     parser.add_argument('--expected', help='SHA from course_records.py read, or absent')
@@ -217,23 +218,15 @@ def main():
         if source.resolve() == destination.resolve() or (destination.exists() and source.samefile(destination)):
             raise ValueError('Output must not overwrite source records')
         output = render(json.loads(source.read_text(encoding='utf-8')), source.resolve().parent)
+        module_path = Path(__file__).with_name('course_records.py')
+        spec = importlib.util.spec_from_file_location('course_records', module_path)
+        records = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(records)
         if protected:
-            module_path = Path(__file__).with_name('course_records.py')
-            spec = importlib.util.spec_from_file_location('course_records', module_path)
-            records = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(records)
             saved = records.write_record(args.root, args.path, 'main', args.expected, output)
             print(json.dumps(dict(saved, items=output.count('<article>')), ensure_ascii=False))
             return
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        fd, name = tempfile.mkstemp(prefix='.review-', dir=destination.parent)
-        try:
-            with os.fdopen(fd, 'w', encoding='utf-8') as stream:
-                stream.write(output)
-            os.replace(name, destination)
-        finally:
-            if os.path.exists(name):
-                os.unlink(name)
+        records.write_preview(destination, output.encode('utf-8'), '.html')
         print(json.dumps({'items': output.count('<article>'), 'output': str(destination)}, ensure_ascii=False))
     except (OSError, ValueError, TypeError, KeyError) as exc:
         parser.exit(2, str(exc) + '\n')
