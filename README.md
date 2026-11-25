@@ -2,6 +2,8 @@
 
 Five coordinated [Codex](https://developers.openai.com/codex/skills) skills for course self-study and exam preparation.
 
+Version 0.4 adds verified batch intake, delivery checks for each course task, and navigation that works with existing course folders.
+
 The bundle is for sustained, systematic course teaching from a usable set of lecture notes, slides, classroom transcripts, handwritten notes, prescribed texts, teacher exercises, past papers, marking schemes, and revision materials. Uploading a complete term in advance is not required. Lab procedures, apparatus operation, risk assessments, experimental data, lab reports and isolated questions do not implicitly start the suite. Explicit component invocation remains available. It keeps one course plan and separates teaching, evidence-based exam analysis, and question design so that these responsibilities do not conflict.
 
 ## Included skills
@@ -18,21 +20,21 @@ The bundle is for sustained, systematic course teaching from a usable set of lec
 
 ## Install
 
-Version **v0.3.1** contains all five skills. Use Codex on macOS or Linux with Python 3.11 or newer. The helpers use Python's standard library and POSIX file locking; no Obsidian plugin, API key, or project-specific development files are required. Codex needs permission to read your materials and write the course-record directory you choose. Check `python3 --version` first; if it is older than 3.11, use a supported Python interpreter for the commands below.
+Version **v0.4.0** contains all five skills. Use Codex on macOS or Linux with Python 3.11 or newer. The helpers use Python's standard library and POSIX file locking; no Obsidian plugin, API key, or project-specific development files are required. Codex needs permission to move the specified materials and write the visible course directory you choose; an explicitly retained read-only source is handled as a declared exception. Check `python3 --version` first; if it is older than 3.11, use a supported Python interpreter for the commands below.
 
 Install all five folders together in the same skills directory: they use relative paths to shared helpers. For a fresh user-wide installation, use Codex's documented `~/.agents/skills/` directory:
 
 ```bash
 git clone https://github.com/tony-creat06/course-study-skills.git
 cd course-study-skills
-git checkout v0.3.1
+git checkout v0.4.0
 mkdir -p ~/.agents/skills
 cp -R skills/study-planner skills/course-study skills/exam-analysis skills/practice-builder skills/study-notes ~/.agents/skills/
 ```
 
-Alternatively, download `course-study-skills-v0.3.1.zip` from the [v0.3.1 release](https://github.com/tony-creat06/course-study-skills/releases/tag/v0.3.1), verify it against the accompanying SHA256 file, extract it, and copy all five folders inside `skills/` to the same destination. The uploaded bundle starts directly with `skills/`, `tests/`, `README.md` and `LICENSE`; GitHub's automatic source archives add a repository root folder.
+Alternatively, download `course-study-skills-v0.4.0.zip` from the [v0.4.0 release](https://github.com/tony-creat06/course-study-skills/releases/tag/v0.4.0), verify it against the accompanying SHA256 file, extract it, and copy all five folders inside `skills/` to the same destination. The uploaded bundle starts directly with `skills/`, `tests/`, `README.md` and `LICENSE`; GitHub's automatic source archives add a repository root folder.
 
-Codex's built-in Skill Installer can also install all five repository paths at ref `v0.3.1`: `skills/study-planner`, `skills/course-study`, `skills/exam-analysis`, `skills/practice-builder`, and `skills/study-notes`. Select one common destination for the five folders.
+Codex's built-in Skill Installer can also install all five repository paths at ref `v0.4.0`: `skills/study-planner`, `skills/course-study`, `skills/exam-analysis`, `skills/practice-builder`, and `skills/study-notes`. Select one common destination for the five folders.
 
 For an upgrade, use the directory from which your existing skills are loaded, including `~/.codex/skills/` on installations already using that location. Do not create a second copy with the same names in another searched directory. Back up all five folders, preserve personal edits, and replace the bundle together. Finish or abort pending course-record bundles using the current writer before replacement. Keep course materials and personal learning records outside the installed skills; upgrading does not require migrating those records. Older downloaded ZIPs retain their original version.
 
@@ -46,10 +48,10 @@ For an existing course with saved records:
 $study-planner 继续学习课程 X，读取已有课程记录并安排下一段。
 ```
 
-For a new course, state the course identity, where its materials are, and where you want the separate learning records saved:
+For a new course, state its identity, the complete batch of raw material paths to organize, and a visible course folder:
 
 ```text
-$study-planner 我想从零学习课程 X。资料在 <path>；请把学习记录保存到 <path>。
+$study-planner 我想从零系统学习课程 X。请将 <原资料路径> 中的全部课程资料移入 <可见课程目录>，完成分类和章节索引，再开始教学。
 ```
 
 The skills treat learner-provided materials as the primary source. Recent two to three years of past papers are the highest-priority evidence for exam style; teacher exercises establish course emphasis; older papers are secondary. AI-authored variants and new questions supplement the limited supply of original questions, and are explicitly labelled as such.
@@ -72,13 +74,19 @@ Helper regressions and bounded simulated use check software and workflow behavio
 
 ## Materials and course files
 
-Each course has a declared material archive and a separate record/output root. Recommended intake is `<project>/inputs/course-materials/<course>/inbox/`: drop new files there, or provide them in chat. The next course resumption scans the intake, classified folders and declared original source roots for added, modified, missing, moved and duplicate content. There is no background watcher. Physical folders separate syllabus, lectures, transcripts, exercises, solutions, exams, revision, textbooks and supplements; a source/chapter index relates pages and timestamps without duplicating files per chapter. Classification follows inspected content, not filenames alone.
+Each new course uses a visible `course-home`: raw materials belong in `<course-home>/资料/`, and canonical records and student outputs default to `<course-home>/学习产出/`. Setup, `course_files.py init`, and `course_records.py` writes all enforce visible directories and reject hidden `.codex/`, `.agents/`, `CODEX_HOME`, or `SKILL.md` directories — never silently falling back to a hidden workspace. When using Codex desktop, run the session in **Local** mode on your chosen course folder (rather than Worktree mode under `.codex/worktrees/`). Existing course histories and paths are not moved by a global Skill upgrade; any later migration first checks the actual records, source paths and authorization.
 
-`study-planner/scripts/course_files.py` provides version-checked `init`, `scan`, `import` and `index` commands; see `skills/study-planner/references/course-files.md` for the exact internal inputs and outputs. External original files remain unchanged. Managed intake files leave the inbox only after archive and registry verification; same-name new versions retain separate bytes. Source changes trigger review of related evidence, not erasure of prior learner records or automatic rewriting of every analysis.
+Initial activation organizes **all files in the supplied batch before teaching, exam analysis or question design**. This means moving the specified raw materials into the visible course folder, classifying them, registering chapter/page/timestamp mappings, creating the fixed `资料/inbox/`, and checking the actual result. It does not mean waiting for a complete term or reading every source page in advance. Files that cannot yet be classified are moved to `unclassified/` with an explicit pending reason. Physical folders separate syllabus, lectures, transcripts, exercises, solutions, exams, revision, textbooks and supplements; chapter indexes link to the same originals rather than copying them per chapter.
+
+Authorized intake moves originals instead of retaining duplicate external copies. A successfully checked move leaves one canonical file; recategorization relocates the same file, and genuinely different revisions remain distinct. The move operation retains a recoverable journal until byte, registry and source-removal checks succeed. Retaining a read-only source is an explicit exception, not a silent copy fallback or a claim that the source was moved. `study-planner/scripts/course_files.py` supplies the underlying guarded material operations (including `import-batch --items-json -` for single-command multi-file intake); exact commands are in `skills/study-planner/references/course-files.md`.
+
+Later materials go in the visible fixed inbox or arrive as an explicitly supplied batch. Normal “continue studying” does **not** rescan or hash every course material. When material work is needed, the foreground workflow lightly inspects the fixed inbox or takes the known batch and checks only those files and their affected dependencies. A full inventory is reserved for the initial supplied batch or an explicit audit. No background watcher is installed. Source changes prompt review of related evidence without erasing historical teaching or learner attempts.
+
+`study-planner/scripts/course_delivery.py` supplies an actual `begin` / `finish` lifecycle for formal course tasks. The planner declares this run's necessary material and output obligations before acting, then finishes against actual saved files, hashes and links. Missing work is repaired and checked again; failure is reported as incomplete. The check is targeted to the current run, not a repeated whole-course audit. It verifies file delivery, not mathematical correctness or learning quality. A prompt or checker cannot force its own invocation: ordinary chat compliance still depends on taking this executable route, and workflow evaluation must inspect the real tool trace and resulting files.
 
 Raw ASR transcripts retain their words and timestamps. Teaching may interpret likely recognition errors using context and corresponding notes; ambiguous terminology, numbers, negations or equations retain the original wording and location in a separate interpretation record.
 
-`index.html` and `index.md` are the visible course entry points. Notes stay in `notes/`, new question prompts in `questions/prompts/`, author solutions in `questions/solutions/`, actual attempts in `practice/`, and completed/shown-solution reviews in `reviews/`. Exam/question analysis also publishes a concise learner report at `exam/brief.md`, covering actual source scope, topics, styles, abilities and gaps. Detailed annotations, profiles and statistics stay in the course workspace; the navigation links only the brief. The analyst publishes it with the associated evidence as one recoverable batch. Uncreated outputs are labelled as such. The default index excludes unreleased author solutions and old combined records with unknown answer exposure. Existing course paths and historical work remain intact; the first eligible resumption adopts the file workflow without replaying lessons or inventing learner answers.
+`index.html` and `index.md` are the visible course entry points. Notes stay in `notes/`, new question prompts in `questions/prompts/`, author solutions in `questions/solutions/`, actual attempts in `practice/`, and completed/shown-solution reviews in `reviews/`. Exam/question analysis also publishes a concise learner report at `exam/brief.md`, covering actual source scope, topics, styles, abilities and gaps. Detailed annotations, profiles and statistics stay in the course workspace; the navigation links only the brief. The analyst publishes it with the associated evidence as one recoverable batch. Uncreated outputs are labelled as such. The default index excludes unreleased author solutions and old combined records with unknown answer exposure. Existing course paths and historical work remain intact; later adoption checks their source/history before any separately authorized migration, without replaying lessons or inventing learner answers. Delivery replies include the actual moved count, pending items, absolute inbox link and the applicable note, question-prompt and analysis-brief links. Required but missing deliverables are explicitly incomplete.
 
 ## Chapter and course notes
 
@@ -102,7 +110,7 @@ The text checker flags common delimiter, brace, and command-escaping mistakes. I
 
 ## Design references
 
-The workflow adapts specific ideas from [Revision Tutor](https://github.com/yangcodingmaster/Revision-Tutor/blob/main/SKILL.en.md) (local reasoning gaps), [OpenTutor](https://github.com/LEARNableLabs/opentutor/blob/main/docs/methodology.md) (concrete revisit and variation tasks), and [DeepTutor](https://arxiv.org/html/2604.26962v3) (source grounding and separate tutoring/practice evaluation). These inform the design; their reported evaluations do not validate this bundle. Coherent lectures, optional in-class checks, and most practice after class remain the defaults.
+The workflow adapts specific ideas from [Revision Tutor](https://github.com/yangcodingmaster/Revision-Tutor/blob/main/SKILL.en.md) (local reasoning gaps), [OpenTutor](https://github.com/LEARNableLabs/opentutor/blob/main/docs/methodology.md) (concrete revisit and variation tasks), [DeepTutor](https://arxiv.org/html/2604.26962v3) (source grounding, separate tutoring/practice evaluation, and inspectable resume rationale), [Universal Diagnostic Tutor](https://github.com/SenmuuuuW/universal-diagnostic-tutor-skill) (natural-language intent routing and portable end-of-session status cards), and [socratic-tutor](https://github.com/janestreet/agent_skills) (explicit progressive hint escalation ladders during practice and repair). These inform the design; their reported evaluations do not validate this bundle. Coherent lectures, optional in-class checks, and most practice after class remain the defaults.
 
 The [IES study guide](https://ies.ed.gov/ncee/wwc/practiceguide/1) informs the combination of worked examples and problem solving. [Carnegie Mellon's learning principles](https://www.cmu.edu/teaching/principles/learning.html) inform targeted feedback and practice that integrates skills and requires choosing when to apply them. These are design grounds, not evidence that this bundle improves an individual student's outcomes.
 

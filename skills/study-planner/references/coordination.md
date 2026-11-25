@@ -8,16 +8,17 @@
 
 实验操作、仪器说明、风险评估、实验数据处理与实验报告默认按当前任务处理，不自动建立课程计划和学习记录；已有理论课程记录也不把另一个实验任务变成续学。零散概念/题目请求直接回答；已建立系统课程内的临时答疑可按原side-notes入口。用户明确点名一个Skill时完成其指定职责，不因使用一个模块就调用五个模块或强建系统课程。用户明确要系统学习实验课程的理论大纲时，按该明确目标判断。
 
-## 身份与存放
+## 身份与存放（可见目录硬门禁）
 
-确认当前课程记录归属的学习者；同一课程的不同学习者使用各自记录根目录。已有归属明确的记录直接接续，不每课重复询问身份；归属不清且会混用个人记录时先确认。
-
-依据用户明确课程、材料正文和已有记录确认身份。指定一个与原始材料分开的课程记录根目录，并告知用户；已有目录沿用。先遵循实际适用的工作区与项目规则。新建独立课程项目时，先完成该环境要求的项目初始化、目录确认和存放说明；Skill不能提供豁免。继续已有课程或在其目录增加普通记录不等于新项目，不重复启动项目初始化。已有课程优先沿用记录根目录；新项目获确认后可用`<项目>/outputs/courses/<已确认课程ID>/`，不写原始材料目录或因概念问题自建另一份课程。无法确认同一课程路径时问一个必要问题，不能在两个对话各创建一份课程。
+1. **可见目录唯一性**：新课程必须先确认用户可在 Finder 直接找到的可见目录 `course-home`：原资料进入 `<course-home>/资料/`，canonical 记录与学生产出默认进入 `<course-home>/学习产出/`，并告知用户实际绝对路径。
+2. **严禁落入隐藏工作区**：禁止在 `.codex/`、`.agents/`、`CODEX_HOME`、Worktree 副本或任何含 `SKILL.md` 的技能目录中新建或整理课程（脚本已拦截写入）。若当前 `pwd` 位于 `.codex/`（如 Codex Worktree 模式）或用户尚未给出可见 `course-home` 路径，**立即停下询问可见路径，并提醒切回 Codex Local 模式**。若沙箱权限阻挡写入目标 `course-home`，直接报错请求授权，**严禁静默回退到 `.codex` 或当前临时工作区**。
+3. **身份与迁移边界**：确认课程归属的学习者，不同学习者使用各自记录根目录；归属明确直接接续，归属不清先问一个必要问题，不在两个对话各建一份课程。已有记录先核对真实路径、来源和历史；全局 Skill 升级不自动迁移旧课程，不凭路径推定同一课程，不删除或覆写历史。
 
 | 记录 | 内容/维护者 |
 | --- | --- |
 | `course.md` | 身份、目标、基础自述、时间/日期、有效偏好与个人教学策略及其来源/范围、原始材料路径；主对话维护共同事实 |
 | `materials.json`、`materials-index.md` | 字节校验、类型归档与章节定位索引；教师判断用途，主流程用文件助手登记和派生 |
+| `delivery.md`、`delivery.json` | 本轮实际文件交付核验回执；由主流程finish派生，不代替学习计划或掌握证据 |
 | `index.md`、`index.html` | 实际资料与产出入口；规划派生维护，不存第二套进度 |
 | `materials.md`、`course-map.md` | 材料用途/实际阅读范围、内容与先修关系；教师维护，不是第二份日程 |
 | `study-plan.md` | 唯一有效执行计划、当前模式、依据与调整理由；主对话规划维护 |
@@ -30,7 +31,7 @@
 | `reviews/` | 已做题HTML阅读输出；规划汇编，不作为另一份学习状态 |
 | `notes/` | 从四模块反馈派生的章节正文、课程整理HTML及内部JSON；笔记模块维护，不承载计划或掌握状态 |
 
-资料与产出按[课程文件工作流](course-files.md)组织：首次建立/旧课程下次接续说明实际inbox、归档及记录绝对路径；每次接续扫描新增/变化，保存后刷新可点击产出入口。原资料按类型归档并以章节索引关联；不把课程outputs当新资料反复导入。
+资料与产出按[课程文件工作流](course-files.md)组织。首次启动先移动整理本次指定的全部原资料、建立类型/章节索引与可见inbox，核验后再交专业模块；未能分类的归unclassified并保留待确认。普通续学不扫描或哈希整门课资料；有资料任务时使用明确新增批次或固定inbox的轻量发现，只处理当前批次。原件按类型存一份，章节只关联；不把学习产出反复导入为新资料。正式课程任务实际运行course_delivery.py begin/finish；沿用主流程run ID，不为每个模块另建平行流程。finish检查本轮声明的文件、版本与链接，缺项先补做再运行，失败不能报告交付完成；命令未调用时不能称它已执行。检查器本身不会迫使任意自然语言对话调用它。
 
 按实际需要建立，不能先生成一堆空文件。旧原型的course/materials/current/lessons直接保留。首次接续读出已讲位置、真实证据与未解项，仅在需要时补study-plan或course-map；原课堂文件继续用原路径，不因脚本接管重命名、重播或转换成“已掌握”。旧records.md已由本共同约定接续，不需要为课程文件做批量格式迁移。
 
@@ -56,7 +57,7 @@ python3 <study-planner>/scripts/course_records.py write --root <课程目录> --
 python3 <study-planner>/scripts/course_records.py note --root <课程目录> --role aside --body-file <本次答疑笔记>
 ```
 
-写入范围按角色和目录限定：main维护共同Markdown、materials.json、派生index.md/index.html/materials-index.md、lessons/practice的Markdown、transcripts的Markdown/JSON及reviews的JSON/HTML；analyst维护exam的Markdown/JSON；questions维护questions的Markdown/JSON；aside仅新增side-notes的Markdown；notes仅维护notes的JSON/HTML。笔记不能写共同事实、计划、断点、考试、题目或作答目录。notes不能bundle或recover，原main/analyst批次能力保持原边界；正式笔记由[笔记渲染器](../../study-notes/references/offline-notes.md)同锁核对来源和目标版本后保存。JSON写入先检查语法；语义与证据仍由模块核对。共享JSON也先read再write。汇总/HTML脚本写课程输出时使用--root/--path/--expected模式，从而保留同样版本保护；--output只新建课程外临时文件：笔记/题解用.html，考试统计用.json；已有目标（包括链接）拒绝覆盖，重试时选新预览文件名。共享记录继续使用带旧SHA的正式模式，不用--output绕过保护。
+写入范围按角色和目录限定：main维护共同Markdown、materials.json、派生index.md/index.html/materials-index.md与delivery.md/delivery.json、lessons/practice的Markdown、transcripts的Markdown/JSON及reviews的JSON/HTML；analyst维护exam的Markdown/JSON；questions维护questions的Markdown/JSON；aside仅新增side-notes的Markdown；notes仅维护notes的JSON/HTML。笔记不能写共同事实、计划、断点、考试、题目或作答目录。notes不能bundle或recover，原main/analyst批次能力保持原边界；正式笔记由[笔记渲染器](../../study-notes/references/offline-notes.md)同锁核对来源和目标版本后保存。JSON写入先检查语法；语义与证据仍由模块核对。共享JSON也先read再write。汇总/HTML脚本写课程输出时使用--root/--path/--expected模式，从而保留同样版本保护；--output只新建课程外临时文件：笔记/题解用.html，考试统计用.json；已有目标（包括链接）拒绝覆盖，重试时选新预览文件名。共享记录继续使用带旧SHA的正式模式，不用--output绕过保护。
 
 多个文件共同描述一份考试分析时，先用 `read-set` 一次取得相关原题记录、profile、统计与本次相关brief的内容/SHA，分析模块在课程外准备新正文及统计，再以 `bundle --role analyst` 整批提交到exam。不能逐个write这些关联结果后称整份分析已发布。规划采用时、教师或题目模块自行读取当前考试依据时，同样用read-set读取本次需要的关联文件；规划已传递完整快照内容与SHA时可直接复用。未建立的文件会返回absent；缺失资料仍需补齐或明确范围，不因取得快照而变为完整分析。
 
@@ -69,7 +70,7 @@ python3 <study-planner>/scripts/course_records.py bundle --root <课程目录> -
 
 临时内容在side-notes；主课堂笔记用role main和kind lesson/practice。根目录及角色每次与当前课程核对。工具不可用时可顺序保存独立笔记，但共享计划的覆盖必须保留写前回读和备份；两个活跃对话无法保证写入安全时先保留独立条目，不称已同步。
 
-写后回读。保留用户手改内容；更正说明依据，外部原资料只读，已授权管理的inbox按文件工作流校验归档，原始字节不改写。成功保存才报告已保存，失败时提供可复制的接续摘要。讲过、看过答案、提示后成功、独立成功与隔时保持分别记录；不保存内部思维过程或没有发生的错误。
+写后回读。保留用户手改内容；更正说明依据，用户已授权整理的指定原资料按移动工作流处理，原始字节不改写；只读保留或无法移动的例外明示，不能默认复制后声称移动。成功保存且本轮交付核验通过才报告对应结果；失败提供真实缺项与可复制的接续摘要。讲过、看过答案、提示后成功、独立成功与隔时保持分别记录；不保存内部思维过程或没有发生的错误。
 
 同一次课堂/反馈同时改变笔记、计划与检查点时，main优先用 `bundle` 提交关联更新，避免单文件写入中断后留下旧进度。先逐项read，准备UTF-8 JSON：`{"updates":[{"path":"practice/<ID>.md","expected":"absent","content":"实际练习正文"},{"path":"current.md","expected":"<原SHA>","content":"对应的检查点正文"}]}`，需要改计划/共同事实时加入同一批。每项正文是完整更新后的文件，实际ID稳定且先与已有练习核对。全部角色、路径、JSON和旧SHA通过才更新公开记录，`current.md`最后写；未改内容保留原mtime。
 
@@ -83,3 +84,5 @@ python3 <study-planner>/scripts/course_records.py recover --root <课程目录> 
 写入及read-set支持macOS/Linux的POSIX锁；Windows共享写入/快照尚不支持，读取普通旧记录不要求锁库。工具不可用时仍保留独立笔记/可复制摘要，不能宣称已经安全同步。课程文件旧格式沿用，不需要批量迁移。
 
 协作锁、批次journal和旧版本备份保存在课程根目录的隐藏`.course-records.lock`、`.course-records.pending.json`与`.history/`中，属于恢复元数据，不是另一份课堂笔记。不擅自改Obsidian设置或删备份；用户要求调整备份存放时再选择位置。它们保护通过脚本的写入，外部编辑器不会自动遵守锁，手改仍需写前回读；不声称断电持久性、跨设备同步或任意外部编辑期间的多文件快照一致性。
+
+首次资料移动的恢复标记为`.course-moves.pending.json`，普通共享读写在未完成移动时阻挡；使用当前course_files.py move-recover明确finish/abort，保留改动冲突和损坏记录，不能手删标记。`.course-delivery/`只存本轮要求、核验来源版本与真实回执索引，不是第二套计划或掌握档案。回退旧助手前先完成/取消未完成移动和记录批次。

@@ -280,6 +280,48 @@ records.write_bundle(ROOT, ROLE, UPDATES)
             records.recover_bundle(self.root, 'main')
         self.assertFalse((self.root / 'current.md').exists())
 
+    def test_agent_hidden_codex_home_and_skill_dirs_reject_writes_but_allow_reads(self):
+        base = self.root.parent
+        for hidden_name in ('.codex', '.agents'):
+            hidden_root = base / hidden_name / 'course'
+            for fn in (
+                lambda: records.write_record(hidden_root, 'current.md', 'main', 'absent', 'x'),
+                lambda: records.write_bundle(hidden_root, 'main', [{'path': 'current.md', 'expected': 'absent', 'content': 'x'}]),
+                lambda: records.add_note(hidden_root, 'aside', 'x'),
+            ):
+                with self.assertRaisesRegex(ValueError, 'visible course directory'):
+                    fn()
+            self.assertFalse(hidden_root.exists())
+        codex_home = base / 'custom_codex_home'
+        with patch.dict('os.environ', {'CODEX_HOME': str(codex_home)}):
+            with self.assertRaisesRegex(ValueError, 'CODEX_HOME'):
+                records.write_record(codex_home / 'work', 'current.md', 'main', 'absent', 'x')
+        skill_dir = base / 'my-skill'
+        skill_dir.mkdir()
+        (skill_dir / 'SKILL.md').write_text('---\nname: x\n---\n')
+        with self.assertRaisesRegex(ValueError, 'Skill directory'):
+            records.write_record(skill_dir / 'sub', 'current.md', 'main', 'absent', 'x')
+        legacy = base / '.codex' / 'legacy'
+        legacy.mkdir(parents=True)
+        (legacy / 'current.md').write_text('Legacy checkpoint')
+        self.assertEqual(records.read_record(legacy, 'current.md')['content'], 'Legacy checkpoint')
+        # Established legacy courses (including via visible symlink) can still be updated.
+        res = records.write_record(legacy, 'current.md', 'main', records.read_record(legacy, 'current.md')['sha256'], 'Updated legacy')
+        self.assertTrue(res['changed'])
+        visible_link = base / 'PHAS0042-outputs'
+        visible_link.symlink_to(legacy)
+        res2 = records.write_bundle(visible_link, 'main', [
+            {'path': 'current.md', 'expected': res['sha256'], 'content': 'Continued via symlink'},
+        ])
+        self.assertTrue(res2['changed'])
+        note = records.add_note(visible_link, 'aside', 'Legacy aside')
+        self.assertTrue(note['changed'])
+        # Even with course.md inside, a Skill directory is never writable for records.
+        (skill_dir / 'sub').mkdir()
+        (skill_dir / 'sub' / 'course.md').write_text('Fake course')
+        with self.assertRaisesRegex(ValueError, 'Skill directory'):
+            records.write_record(skill_dir / 'sub', 'current.md', 'main', 'absent', 'x')
+
 
 class ReadOnlyPlatformTests(unittest.TestCase):
     def test_read_without_fcntl_and_clear_unsupported_write(self):

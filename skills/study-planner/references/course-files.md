@@ -1,88 +1,140 @@
-# 课程资料、增量接收与产出入口
+# 课程资料与可核验交付
 
-新建系统课程、已有课程首次采用本流程、每次接续和接收新资料时读取。这里管理文件，不建立第二份学习计划；课程是否适用先看[启动边界](coordination.md)。
+首次系统课程、明确新增资料、资料核查和正式课程产出时使用；普通续学不全量扫描资料。这里管理文件与本轮交付，不建立第二份学习计划；课程适用范围先看[启动边界](coordination.md)。
 
-## 目录与用户操作
+## 可见课程目录
 
-先告诉用户本课程实际的三个绝对路径：课程记录根目录、资料归档根目录、待整理入口。已有课程沿用记录根目录；新课程可用 `<项目>/outputs/courses/<课程ID>/`。新资料归档推荐 `<项目>/inputs/course-materials/<课程ID>/`：
+新课程必须先确认用户能在 Finder 直接找到的可见 `course-home`。**新建课程的原资料、课程记录与学生产出严禁存放在 `.codex/`、`.agents/`、`CODEX_HOME`、Worktree 或 Skill 目录中**（`course_delivery.py`、`course_files.py`、`course_records.py` 均会在初始化/写入前拦截）。若当前位于 `.codex/` 下且未拿到可见路径，先停下向用户确认路径（并提醒使用 Codex Local 模式）；**已建成的历史旧课**（包括经由可见软链接指向 `.codex` 历史记录，或尚未建立 `materials.json`、沿用只读原资料的旧课）允许直接沿原路径完成 `begin → finish` 续课与记录更新，不强制现场迁移或补建假清单，迁移须另行确认。
 
 ```text
-<资料归档根>/
-  inbox/          用户以后直接放入新文件
-  syllabus/       课程大纲、正式教学与考核要求
-  lectures/       主讲义、slides、板书与批注版本
-  transcripts/    老师上课的原始字幕/转写
-  exercises/      老师习题
-  solutions/      老师答案与评分说明
-  exams/          真题与mock，索引区别身份和学年
-  revision/       复习讲义、公式表
-  textbooks/      教材或章节摘录
-  supplements/    其他相关材料
-  unclassified/   目前无法确认用途的材料
+<可见course-home>/
+  资料/
+    inbox/          后续新增资料的固定入口
+    syllabus/       课程要求
+    lectures/       讲义、课件、板书与批注
+    transcripts/    原始课堂字幕
+    exercises/      老师习题
+    solutions/      老师答案与评分说明
+    exams/          真题与mock
+    revision/       复习讲义、公式表
+    textbooks/      教材及摘录
+    supplements/    已确认的其他补充材料
+    unclassified/   已归档但用途待确认
+  学习产出/         默认课程记录根，保留原角色/子目录
+    index.html
+    index.md
+    materials.json
+    materials-index.md
+    notes/、questions/、exam/等
 ```
 
-每个文件只归入一个主要类型；题答同册保留一个原件，在用途标签中同时登记。章节不再复制文件：以资料ID、页/小节/时间戳关联。外部原始目录保留字节与路径；已获整理授权的 `inbox/` 在归档、校验和登记均成功后移出入口。同名不同内容保留有校验值后缀的新版本，不覆盖旧版。用户直接放入已分类目录也能被下次扫描发现；不能只盯入口。用户删除/覆盖原件后无法凭索引恢复失去的字节，保留已有备份并报告缺失，不猜造旧内容。
+首次告诉用户实际课程目录、资料区、学习产出和inbox的绝对路径。已有课程先读实际路径与历史，不能盲目用新目录替换；全局Skill升级不自动迁移旧课。后来对某门课实际迁移时核对来源、历史和授权，保留稳定ID、原课堂/练习事实及用户修改。
 
-首次交付说明：“以后新资料直接放进 **<实际inbox绝对路径>**，或者在聊天中提供文件；下次继续学习时会检查新增/变化并报告。需要立即处理可以说‘整理新增资料’。无需手工修改索引。”用户临时附加、工具下载的文件也要在获得读取权限后进入同一接收流程，不能只在当轮上下文使用后遗失。附件若在尚未声明的外部位置，先按字节复制到本课inbox、核对校验值并在条目notes中保留原始附件路径，外部文件不移除；不能为接收一个文件而扫描整个下载目录。用户明确指定新的长期资料目录时，用共同助手带原SHA合并materials.json中的source_roots，再扫描该目录，不重新初始化或替换原清单。
+## 交付执行与收尾
 
-## 可重复执行的接收
-
-使用 `scripts/course_files.py`，只依赖标准库和同目录 `course_records.py`。脚本负责文件/校验/版本，语义用途由教师核对内容决定。首次初始化需要明确课程身份、两个根目录和已指定的旧资料目录；不要扫描整个项目、主目录或其他课程。
+主流程对正式课程任务实际调用 `scripts/course_delivery.py`，专业模块沿用同一run ID；独立承担正式交付的模块也采用本流程。内部request由主流程依据本次用户任务准备，不要求学生填表。先声明本轮必须完成的资料与产物，不能等失败后删掉要求来制造通过。
 
 ```text
-python3 <study-planner>/scripts/course_files.py init --root <课程记录根> --materials-root <资料归档根> --course <课程ID> --source-root <已指定旧资料目录>
+python3 <study-planner>/scripts/course_delivery.py begin --course-home <可见课程目录> --root <课程记录根> --activity <setup|intake|lesson|analysis|practice|notes> --request-json <本轮内部交付要求.json>
+python3 <study-planner>/scripts/course_delivery.py finish --root <课程记录根> --run <begin返回的run ID>
+```
+
+begin只记录本轮要求与相关文件原版本，不扫描无关资料。按对应模块保存实质内容后运行finish，由它核对并刷新索引和可见课程入口；同一run中不要再单独重建索引，以免版本混用。它核对本轮声明的真实文件、哈希及入口链接，不把旧文件存在、空目录或“已安排”当作本轮交付。缺项先由原职责补做再finish；仍有缺项就明确未完成，保留已完成教学和历史断点。笔记仍按已讲范围更新所属章节，不为过检查补造完整章节或学生回答。
+
+
+内部request示例（模块准备，学生无需填写）：
+
+```json
+{"sources":["/绝对路径/本次给出的课程资料"],"expected":[{"path":"lessons/L01.md","kind":"lesson","freshness":"new"},{"path":"notes/chapters/C01.html","kind":"notes","freshness":"new"}]}
+```
+
+`setup`首次资料默认取已明确的course-home，自动要求course/materials/course-map/study-plan/current五份实际课程记录；`intake`未给sources时只取固定inbox本批文件。普通lesson/notes/analysis/practice不传sources，不清点整门课。`expected`列本次应交付的相对路径、kind与freshness：new/changed不能用旧文件充数；reuse只接受既往真实核验回执且来源版本一致的产物。按任务使用lesson、notes、prompt、solution、analysis_brief、analysis_detail、review等kind；material_ids只填本轮相关资料ID。lesson要求实质课堂与本章笔记，practice要求题干和作者解析，并核对实际检查点；analysis要求内部依据与可见简报。若用户只是临时答疑或尚未完成一课，选对应aside任务、保存真实断点，不伪造已完成章节。
+
+资料移动分类完毕后，先执行下面的资料交接核对，再交给相关教学/分析模块；它只核对本批资料，并实际生成可读的materials-index.md类型/章节索引与资料入口，不要求教学产物提前存在。资料核验返回required_handoffs：本批有习题/tutorial、mock、试卷或答案评分说明时，需交exam-analysis保存该批已读范围的brief及内部依据；没有考试日期也适用，但不要求读完全部试卷。最终finish仍检查整个本轮交付。
+
+```text
+python3 <study-planner>/scripts/course_delivery.py verify --root <课程记录根> --run <本轮run ID> --materials-only
+```
+
+finish依据本次检查写delivery.md/delivery.json成功或失败回执；成功时生成course-home中的课程入口.html，给出总入口、inbox和真实产物链接。失败返回非零与漏项，保留失败回执，补做后对同一run重新finish。回执文件检查不代替逐式内容和显示核对。
+
+该入口被调用后才有可核验结果；Skill文字、检查器或成功回执不能强迫任意聊天自行调用它。未实际运行不得声称检查通过。验证文件交付不证明数学正确、来源理解正确或学生掌握；教学内容、图像与实际渲染仍按各模块核对。流程评估应查看普通自然语言请求下的实际工具轨迹与文件结果，不只查规则是否存在。
+
+## 首次指定资料全部整理后再教学
+
+首次先列出用户本次指定全部原始文件与资料目录；只清点这些来源，不扩大到下载目录、主目录或其他课程。使用 `scripts/course_files.py` 初始化资料清单，并移动本批资料到资料区、登记类型和章节索引、建固定inbox；完成该批结果核验后再交给教学、考试分析或题目模块。这里的“全部”是当前已提供批次，不是整学期必须上传齐全，也不是首讲前读完全部正文。
+
+```text
+python3 <study-planner>/scripts/course_files.py init --root <课程记录根> --materials-root <可见course-home/资料> --course <课程ID> --source-root <本次指定原资料目录>
 python3 <study-planner>/scripts/course_files.py scan --root <课程记录根>
 ```
 
-每次开始/接续先扫描登记的旧资料根、归档目录和inbox，再采用旧分析。它比较内容SHA256，报告新增、内容变化、缺失、可能移位、重复和无法读取项；只是文件检查，不代表内容已读。未确认分类持续显示为待确认，不能因上轮扫过就消失。当前课不受影响时简短交代后继续；用户明确要先开讲时先检查本课依赖，剩余接收记在当前断点，不能静默跳过或把全量预处理当课堂门槛。
+begin已返回本批文件路径和SHA时直接复用，不再重复scan。scan仅用于明确的全量核查或独立初始清点，比较文件哈希并报告新增、改动、缺失、可能移位、重复和无法读取项；不代表正文已读。普通“继续学习”不运行这个全量命令。教师整理时抽样正文、目录和必要原页判断类型、版本与章节；低把握文件也移入unclassified并明确待确认，不忽略、不捏造分类。
 
-对新增/变化的文件，教师抽样正文、目录和必要原页以判断类别、版本、章节关系；不按文件名直接定案。保留既有资料ID，同一文件可以关联多个章节及多个用途；不能确认就放unclassified并说明。输入清单是模块内部准备的JSON，无需学生填写：
+每份文件归一个主要类型；题答同册只存一份，以用途标签区分。章节以资料ID和页/小节/时间戳关联，不按章复制。模块内部准备条目JSON：
 
 ```json
 {"path":"/绝对路径/新讲义.pdf","sha256":"<本次检查得到的64位SHA256>","category":"lectures","chapters":[{"chapter":"C01","locator":"第3–8页"}],"inspection":"第1页与目录抽样，C01相关页待读","uses":["教学主线"]}
 ```
 
-已有条目更正带原 `id`。页码/时间戳对应关系不明时chapters可空，登记待定位而非捏造；`inspection`明确仅登记/抽样/细读的真实范围。
+已有条目更正携带原id。定位不明可留空chapters并登记待定位，不猜页码；inspection区分登记、抽样和细读。
 
 ```text
 python3 <study-planner>/scripts/course_records.py read --root <课程记录根> --path materials.json
-python3 <study-planner>/scripts/course_files.py import --root <课程记录根> --item-json <模块内部准备的条目.json> --expected <上一步materials.json的SHA>
+# 多份资料推荐一次批量导入（支持 --items-json - 从 stdin 读取 JSON 数组，内部已做整批预检与逐份移动）：
+python3 <study-planner>/scripts/course_files.py import-batch --root <课程记录根> --items-json - --expected <materials.json的原SHA>
+# 单份资料补充或重新分类时也可单独调用：
+python3 <study-planner>/scripts/course_files.py import --root <课程记录根> --item-json <单份文件条目.json> --expected <materials.json的原SHA>
 ```
 
-每次import后用返回的新清单SHA继续；过期版本先回读合并，不能强写。外部来源只复制，原件不修改；原件路径与校验保存在清单。已成功归档的重复导入复用同一ID/副本；重新分类或新版本保留旧副本。来源检查后又变动就停止该文件、重新核对。copy成功但登记失败时不删除来源，保留新字节供下次识别；未完成接收不能报告已整理。
+import默认执行已授权的移动，外部来源不再一律复制。完成后原位置不留同内容副本；重新分类移动同一规范文件。相同内容复用既有规范文件，同名异内容保留真正不同的版本，不覆盖。每次用返回的新清单SHA继续，来源变化或旧SHA冲突先核对合并。只有用户明确保留只读来源时使用 `--copy`；确实无法移动则报告实际限制和未移动项，不能静默复制后声称已转移。
 
-`materials.json`是文件清单，`materials-index.md`是派生的类型/章节索引；`materials.md`继续承载教师实际用途判断和阅读范围，已有正文不可被自动索引覆盖。新文件完成接收后，教师把关键对应关系写回materials/course-map；规划根据真实变化更新同一计划。字幕另按[ASR材料规则](../../course-study/references/transcripts.md)读取。
+移动过程中保留原始字节及来源、版本信息，使用恢复journal协调目标文件、登记和源移除。中断或核验失败保留可恢复字节，运行course_files.py move-recover --root <课程记录根> --decision finish或abort明确恢复后回读；不能手删journal绕过未完成状态，也不能只因目标已出现就宣称成功。
 
-新增资料不是让旧分析全部失效。按受影响资料ID/版本与原页引用核对相关 `exam/`、课堂反馈和笔记；未变的来源复用。文件只移动、内容未变时更新定位；源内容变化/缺失先标明相关结论待复核，再由原职责更正并重建受影响阅读输出。保留历史教学、实际作答与提示事实，不能回写成“未发生”。扫描返回的affected_ids是文件线索，不是已完成的分析复核；无法定位依赖时明确范围待核对。
+`import-batch` 会在改任何文件前对整批条目做完整干跑预检（检查 `id`、SHA、来源根、目标冲突与重分类边界），任一项预检失败则零文件改动。若执行阶段发生磁盘/中断故障或批内检测到 `materials.json` 手工修改冲突，**脚本绝不静默回滚覆写已提交条目或手工修改**，而是输出包含 `completed`、`failed_item`、`remaining_items`、`pending_move_recovery` 与 `last_committed_registry_sha256` 的结构化 JSON：若 `pending_move_recovery` 为真，先运行 `move-recover`——**`--decision finish` 已经移走并登记该故障文件，后续只对 `remaining_after_finish` 重试；`--decision abort` 会恢复该文件，后续对 `remaining_after_abort`（含 `failed_item`）重试**；回读 `materials.json` 取当前 SHA 后再续跑即可。
 
-## 单独产出区域与导航
+materials.json是同一文件清单；materials-index.md是派生类型/章节索引；materials.md保留真实用途和阅读范围，不被索引覆盖。教师把关键对应写回materials/course-map。字幕按[ASR规则](../../course-study/references/transcripts.md)保留原话和定位。
 
-课程记录根目录内既有职责保持：
+## 后续新增与针对性检查
+
+以后把新增资料放入实际 `资料/inbox/`，或在聊天中指出具体文件。前台需要处理资料时轻量列举这个固定入口，或直接使用用户给出的新增批次，然后只检查该批文件、登记及受影响产物。不自动遍历和哈希全部资料；没有后台监控。文件直接放入某个类型目录时，也可明确指出该批路径接收，无需先复制回inbox。
+
+新附件和工具下载的资料进入同一移动流程；保留原附件路径，不扫描整个附件/下载目录。首次未覆盖的新来源先以共同助手带原SHA合并source_roots，保留原清单和未知字段，再仅处理指定批次。用户明确要求全量查漏或来源审计时才运行scan并说明范围。
+
+新增不使旧分析全部失效。内容未变而路径改变只更新定位；实际内容改变/缺失时按资料ID、版本和原页引用检查相关分析/笔记，由原职责更正受影响部分。没有依赖证据就保留待核对，不把文件检查冒充分析复核。历史教学、作答、提示和计划历史继续保留。
+
+## 学生产出区域与导航
+
+以下位置相对于课程记录根；新课程默认在可见course-home的学习产出中，原角色保持：
 
 | 位置 | 用户查找什么 | 维护者 |
 | --- | --- | --- |
-| `index.html`、`index.md` | 本课程可点击总入口、资料入口及哪些产物尚未生成 | 规划派生维护 |
-| `materials-index.md` | 按类型和章节查原资料 | 从同一材料清单派生 |
-| `lessons/` | 保存的课堂原记录 | 教师/主流程 |
-| `notes/`（主要为`chapters/`；`lessons/`可选；`exports/`按需） | 持续积累的完整章笔记；课程完成后另作全课程整理；按需PDF | 笔记模块 |
-| `questions/prompts/`、`questions/solutions/` | 新题题干与对应作者解析，沿用同一题ID | 题目模块 |
-| `practice/` | 实际作答、帮助条件与反馈 | 规划 |
-| `reviews/` | 已做题或已展示解析的题解阅读集 | 规划 |
-| `exam/brief.md` | 学生可见的题目/考试分析简报：实际范围、知识点、题型、能力与缺口 | 分析模块，与内部结果同批更新 |
-| `exam/` 其余既有记录 | 内部逐题标注、能力链、统计与核对依据，按需查看 | 分析模块 |
-| `transcripts/` | 字幕读法、疑点与原始定位 | 教师/主流程 |
+| index.html、index.md | 可点击总入口、资料入口和未生成状态 | 规划 |
+| materials-index.md | 同一资料的类型与章节定位 | 规划派生 |
+| lessons/ | 实质课堂原记录 | 教师/主流程 |
+| notes/（主要chapters/；lessons/可选；exports/按需） | 完整章笔记、完成课程后的整课整理与按需PDF | 笔记模块 |
+| questions/prompts/、questions/solutions/ | 对应稳定ID的题干与作者解析 | 题目模块 |
+| practice/ | 实际作答、帮助与反馈 | 规划 |
+| reviews/ | 已做题或已展示解析的阅读集 | 规划 |
+| exam/brief.md | 实际范围、知识点、题型、能力和缺口的简报 | 分析模块，与证据同批更新 |
+| exam/其余记录 | 内部逐题标注、能力链、统计及核对依据 | 分析模块 |
+| transcripts/ | 字幕理解、疑点及原始定位 | 教师/主流程 |
 
-已有questions/的合并记录和旧课堂路径保留，不批量改名或复制成另一套学习档案。需要给学生旧题时从同一原记录取题干。总览的“题目与考试分析简报”只链接真实已生成的exam/brief.md，内部profile/逐题明细不自动枚举；没有简报时明确尚未生成。详细分析仍保留在该课程工作区，不进全局Skill代码目录。总览默认不直接链接未知是否含答案的旧questions记录和未展示作者解析；可见题干、笔记和已展示题解分开。普通练习不因文件已生成就算学生看过；明确要看全部解析时才用show-solutions开放作者解析入口。
+章笔记沿用v3连贯完整正文及精简/回忆视图，按课反馈积累，不退回最终公式清单或为每课强建独立笔记。notes角色只维护notes，计划/证据留原维护者。内部详细分析也在该课程目录，不写进全局Skill代码目录。
 
-产出在有实质内容时创建；总入口对尚未生成的栏目明确标注，不能用空目录冒充有笔记。一课/章节和练习按原模块时机生成，而不是仅做索引。每次保存后主流程刷新入口并发送相关文件的绝对路径链接；笔记失败保存待整理范围，不能宣称已生成。旧课程首次接续时只依据既有真实内容补齐入口和有必要的阅读产物，不补造学生回答。
+总览只直接链接真实exam/brief.md；未知含答案的旧questions合并记录和未展示作者解析不进入题干入口。作者解析按实际反馈/明确请求开放，文件生成不等于学生已看过。旧课堂、题目路径不批量改名或复制成第二套学习档案。
+
+活跃run由finish刷新总入口。以下命令仅供没有活跃交付任务的单独导航维护：
 
 ```text
 python3 <study-planner>/scripts/course_records.py read-set --root <课程记录根> --paths materials.json index.md index.html materials-index.md
 python3 <study-planner>/scripts/course_files.py index --root <课程记录根> --expected-manifest <materials.json的SHA> --expected-targets-json <三个入口目标SHA的内部JSON>
 ```
 
-目标JSON为 `{"index.md":"absent或原SHA","index.html":"absent或原SHA","materials-index.md":"absent或原SHA"}`。索引按当前真实文件派生，含来源清单版本保护与目标旧SHA，保留用户修改；冲突时回读合并，不以新读出的SHA覆盖未经合并的批注。手工维护的索引可按相同共同写入规则合并，不必强用生成器。只在用户明确索要作者解析/确认相应开放范围时添加 `--show-solutions`；该开关打开全部作者解析链接，不能用于只开放其中一道题的情形。
+目标JSON为 `{"index.md":"absent或原SHA","index.html":"absent或原SHA","materials-index.md":"absent或原SHA"}`。保留用户修改，冲突先回读合并；不能换上新SHA后覆盖未经合并的批注。手工索引也须遵循共同写入保护。只有用户明确索要全部作者解析时才用 `--show-solutions`，它不能表示仅开放某一道题。
 
-首次/增量接收后报告新增、更新、重复、待确认数量及实际位置和影响范围。无变化时不长篇重复目录说明。文件放入后只有实际运行才会发现和整理，本流程不声称后台监控或主动唤醒聊天。
+交付回复给出真正移动数、去重/待确认/未移动项和影响范围，附inbox绝对路径链接、本轮可见笔记、题干、分析简报及总入口链接。未发生的任务不凑产物；已声明但缺少的产物明确未完成，先补做再复查。尚未生成的栏目可以显示状态，不能用空文件或空目录冒充交付。
 
-登记读取会检查本文件实际使用的结构与字段；JSON无法解析或字段损坏时停止操作并指出materials.json中的位置，保留原字节。根据备份与实际材料核对修复，不重置清单或静默丢弃条目；通用记录写入器仍只做JSON语法与角色/版本保护。
+登记损坏时停止覆盖并指出位置，保留原字节和备份；不得重置清单或静默丢条目。共同记录写入器只核验角色、语法与版本；文件交付检查不能代替语义和内容核对。
+
+参考方法：[Superpowers交付前验证](https://github.com/obra/superpowers/blob/main/skills/verification-before-completion/SKILL.md)强调以刚执行的证据支撑完成声明；[Anthropic长任务harness](https://www.anthropic.com/research/effective-harnesses-for-long-running-agents)区分首次初始化与增量工作。本流程采用相应方法，不引入这些项目作为运行依赖，也不以其测试代替本课程验收。

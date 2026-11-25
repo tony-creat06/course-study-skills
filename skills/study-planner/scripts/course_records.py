@@ -15,13 +15,36 @@ import time
 import math
 import uuid
 
-MAIN_FILES = {'course.md', 'current.md', 'study-plan.md', 'materials.md', 'course-map.md', 'materials.json', 'materials-index.md', 'index.md', 'index.html'}
+MAIN_FILES = {'course.md', 'current.md', 'study-plan.md', 'materials.md', 'course-map.md', 'materials.json', 'materials-index.md', 'index.md', 'index.html', 'delivery.md', 'delivery.json'}
 ROLE_FORMATS = {'main': {'lessons': {'.md'}, 'practice': {'.md'}, 'reviews': {'.json', '.html'}, 'transcripts': {'.md', '.json'}},
                 'aside': {'side-notes': {'.md'}}, 'analyst': {'exam': {'.md', '.json'}},
                 'questions': {'questions': {'.md', '.json'}},
                 'notes': {'notes': {'.html', '.json'}}}
 ROLE_DIRS = {role: set(directories) for role, directories in ROLE_FORMATS.items()}
 PENDING = '.course-records.pending.json'
+AGENT_HIDDEN_DIRS = {'.codex', '.agents', '.claude', '.gemini'}
+LEGACY_COURSE_MARKERS = ('course.md', 'current.md', 'study-plan.md', 'materials.json')
+
+
+def is_existing_course_root(resolved):
+    return resolved.is_dir() and any((resolved / name).is_file() for name in LEGACY_COURSE_MARKERS)
+
+
+def check_visible_root(root):
+    resolved = Path(root).expanduser().resolve()
+    for candidate in (resolved, *resolved.parents):
+        if (candidate / 'SKILL.md').is_file():
+            raise ValueError('Choose a visible course directory outside a Skill directory: ' + str(resolved))
+    if is_existing_course_root(resolved):
+        return resolved
+    if any(part.lower() in AGENT_HIDDEN_DIRS for part in resolved.parts):
+        raise ValueError('Choose a visible course directory, not an agent hidden directory (.codex/.agents): ' + str(resolved))
+    codex_home = os.environ.get('CODEX_HOME', '').strip()
+    if codex_home:
+        codex_resolved = Path(codex_home).expanduser().resolve()
+        if len(codex_resolved.parts) > 1 and (resolved == codex_resolved or codex_resolved in resolved.parents):
+            raise ValueError('Choose a visible course directory outside CODEX_HOME: ' + str(resolved))
+    return resolved
 
 
 def journal_path(root):
@@ -32,6 +55,9 @@ def journal_path(root):
 
 
 def check_pending(root):
+    move_pending = Path(root) / '.course-moves.pending.json'
+    if move_pending.exists() or move_pending.is_symlink():
+        raise ValueError('Incomplete material move at ' + str(move_pending) + '; use course_files.py move-recover before shared operations')
     if journal_path(root).exists():
         raise ValueError('Incomplete record bundle; main or its analyst owner must run recover before reading or writing shared records')
 
@@ -178,6 +204,7 @@ def backup_record(root, target, previous):
 
 
 def write_record(root, relative, role, expected, content, lock_timeout=2.0):
+    check_visible_root(root)
     check_role(role, relative)
     root, target = target_path(root, relative)
     data = content.encode('utf-8')
@@ -265,6 +292,7 @@ def apply_journal(root, journal):
 
 
 def write_bundle(root, role, updates, lock_timeout=2.0):
+    check_visible_root(root)
     if role not in {'main', 'analyst'}:
         raise ValueError('Only main or analyst can bundle shared records')
     root = Path(root).resolve()
@@ -338,6 +366,7 @@ def recover_bundle(root, role, decision=None, lock_timeout=2.0):
 
 
 def add_note(root, role, content, kind=None, lock_timeout=2.0):
+    check_visible_root(root)
     if role == 'aside':
         if kind not in (None, 'aside'):
             raise ValueError('Aside role only creates aside notes')
